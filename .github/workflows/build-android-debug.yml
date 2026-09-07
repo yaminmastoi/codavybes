@@ -26,6 +26,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_APP_PLATFORM: android
+          VITE_APP_VERSION: 13.4.0
         run: npm run build
 
       - name: Install Capacitor
@@ -42,6 +44,12 @@ jobs:
 
       - name: Apply CodaVybes branding
         run: node scripts/apply-android-branding.mjs
+
+      - name: Apply Android version metadata
+        env:
+          CODAVYBES_VERSION: 13.4.0
+          CODAVYBES_BUILD_NUMBER: ${{ github.run_number }}
+        run: node scripts/apply-android-version.mjs
 
       - name: Build installable debug APK
         working-directory: platforms/mobile-capacitor/android

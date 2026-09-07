@@ -1,7 +1,7 @@
 {
   "name": "codavybes-desktop-shell",
   "private": true,
-  "version": "13.3.0",
+  "version": "13.4.0",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build"

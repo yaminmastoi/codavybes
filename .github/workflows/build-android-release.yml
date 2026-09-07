@@ -8,27 +8,110 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           package-manager-cache: false
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - run: npm install
+      - name: Install web dependencies
+        run: npm install
+
       - name: Build web client
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_APP_PLATFORM: android
+          VITE_APP_VERSION: 13.4.0
         run: npm run build
-      - working-directory: platforms/mobile-capacitor
-        run: npm install && npx cap add android && npx cap sync android
-      - run: node scripts/apply-android-branding.mjs
 
-      - name: Decode signing keystore
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > platforms/mobile-capacitor/android/app/codavybes-release.jks
+      - name: Prepare Android project
+        working-directory: platforms/mobile-capacitor
+        run: npm install && npx cap add android && npx cap sync android
+
+      - name: Apply CodaVybes Android branding
+        run: node scripts/apply-android-branding.mjs
+
+      - name: Apply Android version metadata
+        env:
+          CODAVYBES_VERSION: 13.4.0
+          CODAVYBES_BUILD_NUMBER: ${{ github.run_number }}
+        run: node scripts/apply-android-version.mjs
+
+      - name: Decode and validate release keystore
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "::error::ANDROID_KEYSTORE_BASE64 is empty"; exit 1; }
+          test -n "$ANDROID_STORE_PASSWORD" || { echo "::error::ANDROID_STORE_PASSWORD is empty"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "::error::ANDROID_KEY_ALIAS is empty"; exit 1; }
+
+          python - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+
+          raw = os.environ["ANDROID_KEYSTORE_BASE64"].strip()
+          raw = raw.replace("-----BEGIN CERTIFICATE-----", "")
+          raw = raw.replace("-----END CERTIFICATE-----", "")
+          raw = "".join(raw.split())
+
+          if not raw:
+              raise SystemExit("ANDROID_KEYSTORE_BASE64 contains no Base64 data")
+
+          try:
+              data = base64.b64decode(raw, validate=True)
+          except Exception as exc:
+              raise SystemExit(f"ANDROID_KEYSTORE_BASE64 is not valid Base64: {exc}")
+
+          if len(data) < 100:
+              raise SystemExit(f"Decoded keystore is unexpectedly small ({len(data)} bytes)")
+
+          path = Path("platforms/mobile-capacitor/android/app/codavybes-release.jks")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_bytes(data)
+          print(f"Decoded signing keystore ({len(data)} bytes)")
+          PY
+
+          KEYSTORE="${GITHUB_WORKSPACE}/platforms/mobile-capacitor/android/app/codavybes-release.jks"
+          STORE_TYPE=""
+
+          for candidate in PKCS12 JKS; do
+            if keytool -list \
+              -keystore "$KEYSTORE" \
+              -storepass "$ANDROID_STORE_PASSWORD" \
+              -storetype "$candidate" >/dev/null 2>&1; then
+              STORE_TYPE="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$STORE_TYPE" ]; then
+            echo "::error::Decoded keystore cannot be opened as PKCS12 or JKS. Re-create the Base64 secret from the original codavybes-release.jks and verify ANDROID_STORE_PASSWORD."
+            exit 1
+          fi
+
+          if ! keytool -list \
+            -keystore "$KEYSTORE" \
+            -storepass "$ANDROID_STORE_PASSWORD" \
+            -storetype "$STORE_TYPE" \
+            -alias "$ANDROID_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error::ANDROID_KEY_ALIAS does not exist in the keystore. Expected alias: codavybes"
+            exit 1
+          fi
+
+          echo "Detected keystore type: $STORE_TYPE"
+          echo "CODAVYBES_KEYSTORE_TYPE=$STORE_TYPE" >> "$GITHUB_ENV"
 
       - name: Add release signing configuration
         shell: bash
@@ -42,6 +125,7 @@ jobs:
                       storePassword System.getenv("CODAVYBES_STORE_PASSWORD")
                       keyAlias System.getenv("CODAVYBES_KEY_ALIAS")
                       keyPassword System.getenv("CODAVYBES_KEY_PASSWORD")
+                      storeType System.getenv("CODAVYBES_KEYSTORE_TYPE")
                   }
               }
               buildTypes {

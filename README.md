@@ -103,3 +103,7 @@ V11.2 changes blue-tick verification to a Certified-rank waitlist. Run `supabase
 - No database migration is required for V13.2.
 
 See `V13_2_UI_FIX.md`.
+
+## V13.4 Analytics Command Center
+
+V13.4 adds live Web/Android/Windows presence, real product activity, version/device health, privacy-aware telemetry and HQ release control. See `V13_4_ANALYTICS_SETUP.md` and run only migration `016_analytics_command_center.sql` after an existing 001–015 database.

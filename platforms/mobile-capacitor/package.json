@@ -1,7 +1,7 @@
 {
   "name": "codavybes-mobile-shell",
   "private": true,
-  "version": "13.3.0",
+  "version": "13.4.0",
   "scripts": {
     "web:build": "cd ../.. && npm run build",
     "sync": "npm run web:build && cap sync",

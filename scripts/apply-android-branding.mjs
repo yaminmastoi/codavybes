@@ -16,6 +16,9 @@ let manifest = fs.readFileSync(manifestPath, 'utf8')
 manifest = manifest
   .replace(/android:icon="@[^"]+"/, 'android:icon="@drawable/codavybes_icon"')
   .replace(/android:roundIcon="@[^"]+"/, 'android:roundIcon="@drawable/codavybes_icon"')
+if (!manifest.includes('android.permission.ACCESS_COARSE_LOCATION')) {
+  manifest = manifest.replace('<application', '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <application')
+}
 fs.writeFileSync(manifestPath, manifest)
 
 console.log('Applied CodaVybes Android branding.')

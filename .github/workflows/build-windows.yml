@@ -1,0 +1,39 @@
+name: Build CodaVybes Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Install desktop dependencies
+        working-directory: platforms/desktop-tauri
+        run: npm install
+
+      - name: Build CodaVybes Windows installers
+        working-directory: platforms/desktop-tauri
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Upload Windows installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodaVybes-Windows
+          path: |
+            platforms/desktop-tauri/src-tauri/target/release/bundle/nsis/*.exe
+            platforms/desktop-tauri/src-tauri/target/release/bundle/msi/*.msi

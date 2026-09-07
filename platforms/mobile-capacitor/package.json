@@ -1,0 +1,27 @@
+{
+  "name": "codavybes-mobile-shell",
+  "private": true,
+  "version": "13.3.0",
+  "scripts": {
+    "web:build": "cd ../.. && npm run build",
+    "sync": "npm run web:build && cap sync",
+    "add:android": "cap add android",
+    "add:ios": "cap add ios",
+    "android": "npm run sync && cap open android",
+    "ios": "npm run sync && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "latest",
+    "@capacitor/app": "latest",
+    "@capacitor/browser": "latest",
+    "@capacitor/core": "latest",
+    "@capacitor/haptics": "latest",
+    "@capacitor/ios": "latest",
+    "@capacitor/keyboard": "latest",
+    "@capacitor/status-bar": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest",
+    "typescript": "latest"
+  }
+}

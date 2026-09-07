@@ -1,0 +1,87 @@
+/* CodaVybes V13.3 — Discover people list, premium profile preview, sticky profile identity and + badge. */
+
+/* Shared identity marks */
+.avatar{overflow:visible}
+.avatar-image{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
+.identity-badges{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;line-height:0}
+.identity-badges--hero{margin-left:2px;gap:6px}
+.plus-badge{display:inline-grid;place-items:center;flex:0 0 auto;line-height:0;vertical-align:middle}
+.plus-badge__disc{fill:#0b0c10;stroke:#c99b38;stroke-width:1.35}
+.plus-badge__star{fill:#f1c75b;stroke:#f7db8d;stroke-width:.28;stroke-linejoin:round}
+
+/* ---------------- Discover: real list instead of profile-card wall ---------------- */
+.discover-page--list{width:100%;max-width:840px;margin-inline:auto;overflow-x:hidden}
+.discover-head-v133{margin-bottom:16px!important}
+.discover-tabs--v133{width:100%;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px!important;overflow:visible!important;margin-bottom:13px!important}
+.discover-tabs--v133 button{min-width:0!important;width:100%;padding:9px 5px!important;font-size:10px!important;overflow:hidden;text-overflow:ellipsis}
+.discover-people-list{width:100%;display:grid;border-top:1px solid var(--line);margin-top:4px}
+.discover-person-row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;min-width:0;padding:14px 2px;border-bottom:1px solid var(--line);background:transparent;transition:background .16s ease}
+.discover-person-row:hover{background:color-mix(in srgb,var(--surface-2) 56%,transparent)}
+.discover-person-avatar{position:relative;width:58px;height:58px;padding:0;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}
+.discover-person-avatar .avatar{width:52px!important;height:52px!important;font-size:15px!important;border-color:var(--line)!important;background:var(--surface-2)!important}
+.discover-person-match{position:absolute;right:-1px;bottom:-2px;height:19px;min-width:38px;padding:0 5px;border-radius:999px;border:1px solid var(--accent-line);background:var(--surface);color:var(--accent);display:flex;align-items:center;justify-content:center;gap:2px;font-size:7px;font-weight:850;letter-spacing:-.01em}
+.discover-person-copy{min-width:0;width:100%;padding:2px 0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;display:block}
+.discover-person-name{display:flex;align-items:center;gap:5px;min-width:0;max-width:100%}
+.discover-person-name>strong{font-size:13px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%}
+.discover-person-handle{display:block;margin-top:3px;color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.discover-person-meta{display:flex;align-items:center;gap:4px;min-width:0;margin-top:6px;color:var(--muted);font-size:8px;white-space:nowrap;overflow:hidden}
+.discover-person-meta>*{flex:0 0 auto}.discover-person-meta>b{color:var(--accent);font-size:7px;letter-spacing:.035em;max-width:82px;overflow:hidden;text-overflow:ellipsis}.discover-person-meta>i{opacity:.45;font-style:normal}.discover-person-meta>span{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden;text-overflow:ellipsis}.discover-person-meta>span:last-child{color:var(--text)}
+.discover-meet-inline{height:36px;min-width:74px;padding:0 12px;border:1px solid var(--accent);border-radius:11px;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:5px;font:inherit;font-size:9px;font-weight:820;white-space:nowrap;box-shadow:none;transform:none}
+.discover-meet-inline:hover:not(:disabled){filter:brightness(.94)}.discover-meet-inline:disabled{opacity:.5;cursor:not-allowed}
+
+/* Animated VIP profile preview */
+.discover-preview-backdrop{position:fixed;inset:0;z-index:180;background:rgba(7,9,14,.52);backdrop-filter:blur(12px);display:grid;place-items:center;padding:18px;animation:cv-preview-backdrop .18s ease both}
+.discover-preview{position:relative;width:min(440px,100%);max-height:min(88svh,720px);overflow:auto;border:1px solid var(--line);border-radius:28px;padding:34px 24px 22px;text-align:center;isolation:isolate;box-shadow:0 24px 70px rgba(0,0,0,.22);animation:cv-preview-open .34s cubic-bezier(.2,.84,.28,1.08) both}
+.discover-preview__glow{position:absolute;z-index:-1;inset:-120px 8% auto;height:250px;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 24%,transparent),transparent 67%);pointer-events:none}
+.discover-preview__close{position:absolute;right:14px;top:14px;width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);display:grid;place-items:center;box-shadow:none}.discover-preview__close:hover{color:var(--text);border-color:var(--accent-line)}
+.discover-preview__avatar{display:grid;place-items:center;margin:6px 0 16px}.discover-preview__avatar .avatar{width:104px!important;height:104px!important;font-size:29px!important;border-color:var(--accent-line)!important;background:var(--surface-2)!important}
+.discover-preview__name{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0}.discover-preview__name h2{font-size:28px;letter-spacing:-.045em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
+.discover-preview__handle{margin:6px 0 0;color:var(--muted);font-size:10px}
+.discover-preview__metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:22px 0 12px;border-block:1px solid var(--line)}
+.discover-preview__metrics>div{min-width:0;padding:13px 5px}.discover-preview__metrics>div+div{border-left:1px solid var(--line)}.discover-preview__metrics span{display:block;color:var(--muted);font-size:7px;letter-spacing:.12em}.discover-preview__metrics strong{margin-top:5px;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--text);font-size:14px;white-space:nowrap}
+.discover-preview__rank{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:9px;font-weight:850;letter-spacing:.07em;margin:3px auto 12px}
+.discover-preview__interests{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 auto 17px}.discover-preview__interests span{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:8px;background:var(--surface-2)}
+.discover-preview__meet{width:100%;margin-top:3px}
+@keyframes cv-preview-open{from{opacity:0;transform:translateY(26px) scale(.94);filter:blur(5px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes cv-preview-backdrop{from{opacity:0}to{opacity:1}}
+
+/* ---------------- Profile: hero morphs into a compact identity bar ---------------- */
+.profile-page--v133{position:relative}
+.profile-sticky-anchor{position:sticky;top:8px;z-index:70;height:0;overflow:visible;pointer-events:none}
+.profile-sticky-identity{width:min(100%,680px);height:58px;margin:0 auto;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:7px 10px;border-radius:17px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 94%,transparent)!important;backdrop-filter:blur(18px);opacity:0;transform:translateY(-16px) scale(.98);transition:opacity .2s ease,transform .28s cubic-bezier(.2,.82,.2,1);pointer-events:none;box-shadow:none!important}
+.profile-sticky-anchor.is-visible .profile-sticky-identity{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.profile-sticky-identity .avatar{width:38px!important;height:38px!important;font-size:12px!important;border-color:var(--line)!important}
+.profile-sticky-copy{min-width:0;text-align:left}.profile-sticky-name{display:flex;align-items:center;gap:5px;min-width:0}.profile-sticky-name>strong{min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}.profile-sticky-copy>span{display:block;margin-top:2px;color:var(--muted);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-sticky-score{height:31px;border:1px solid var(--accent-line);border-radius:10px;padding:0 8px;display:flex;align-items:center;gap:4px;color:var(--accent);font-size:10px;white-space:nowrap;background:var(--accent-soft)}
+.profile-name-line--hero{overflow:visible!important}.profile-name-line--hero h1{min-width:0}.profile-avatar-stage .avatar-image{border-radius:50%}
+
+/* Existing request and bond identities inherit premium badges without crowding. */
+.request-card .identity-line,.bond-card .identity-line,.profile-bond-mini .identity-line{display:flex;align-items:center;gap:5px;min-width:0}.request-card .identity-line>strong,.bond-card .identity-line>h3,.profile-bond-mini .identity-line>strong{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media (min-width:768px){
+  .discover-page--list{padding-inline:clamp(24px,4vw,46px)}
+  .discover-person-row{grid-template-columns:62px minmax(0,1fr) 90px;padding:15px 8px}.discover-person-avatar{width:62px;height:62px}.discover-person-avatar .avatar{width:54px!important;height:54px!important}.discover-meet-inline{min-width:86px}
+  .profile-sticky-anchor{top:10px}.profile-sticky-identity{height:62px;padding:8px 12px}
+}
+
+@media (max-width:520px){
+  .discover-page--list{padding-inline:12px!important}
+  .discover-head-v133 h1{font-size:28px!important}
+  .age-safety-chip{padding:9px 10px!important;font-size:8px!important;margin-bottom:10px!important}
+  .discover-tabs--v133{gap:3px!important}.discover-tabs--v133 button{font-size:8px!important;padding:8px 2px!important}
+  .discover-person-row{grid-template-columns:52px minmax(0,1fr) 66px;gap:8px;padding:12px 0}
+  .discover-person-avatar{width:52px;height:52px}.discover-person-avatar .avatar{width:46px!important;height:46px!important;font-size:13px!important}.discover-person-match{right:-1px;bottom:-1px;min-width:34px;height:17px;font-size:6px}
+  .discover-person-name>strong{font-size:11px}.discover-person-handle{font-size:8px}.discover-person-meta{font-size:7px;gap:3px;margin-top:5px}.discover-person-meta>b{max-width:64px;font-size:6px}.discover-person-meta>span:nth-last-child(2){display:none}.discover-person-meta>i:nth-last-of-type(1){display:none}
+  .discover-meet-inline{height:34px;min-width:66px;padding:0 8px;font-size:8px;border-radius:10px}.discover-meet-inline svg{width:14px}
+  .discover-preview-backdrop{padding:0;align-items:end}.discover-preview{width:100%;max-height:88svh;border-radius:26px 26px 0 0;padding:30px 18px max(22px,env(safe-area-inset-bottom));animation-name:cv-preview-sheet}.discover-preview__avatar .avatar{width:92px!important;height:92px!important}.discover-preview__name h2{font-size:24px}.discover-preview__metrics{margin-top:18px}
+  .profile-sticky-anchor{top:6px}.profile-sticky-identity{height:54px;border-radius:15px;grid-template-columns:36px minmax(0,1fr) auto;padding:6px 8px}.profile-sticky-identity .avatar{width:36px!important;height:36px!important}.profile-sticky-score{height:29px;padding-inline:7px;font-size:9px}.profile-sticky-name>strong{font-size:10px}
+}
+
+@media (max-width:350px){
+  .discover-page--list{padding-inline:9px!important}.discover-person-row{grid-template-columns:48px minmax(0,1fr) 58px;gap:6px}.discover-person-avatar{width:48px;height:48px}.discover-person-avatar .avatar{width:43px!important;height:43px!important}.discover-meet-inline{min-width:58px;padding:0 5px}.discover-meet-inline span{font-size:7px}.discover-person-meta>b{display:none}.discover-person-meta>svg{display:none}.discover-person-meta>i:first-of-type{display:none}
+  .profile-sticky-score{padding-inline:5px}.profile-sticky-score svg{display:none}
+}
+@keyframes cv-preview-sheet{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.discover-preview,.discover-preview-backdrop,.profile-sticky-identity{animation:none!important;transition:none!important}}
+.skeleton-people-list{display:grid;border-top:1px solid var(--line);margin-top:10px}.skeleton-person-row{display:grid;grid-template-columns:52px minmax(0,1fr) 68px;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);position:relative;overflow:hidden}.skeleton-person-row:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 15%,color-mix(in srgb,var(--text) 5%,transparent) 45%,transparent 75%);transform:translateX(-100%);animation:skeletonShimmer 1.35s infinite}.skeleton-person-row>.skeleton-circle{width:46px;height:46px}.skeleton-person-row>span{display:grid;gap:6px}.skeleton-person-action{width:64px;height:34px;border-radius:10px;background:var(--surface-3)}
+@media(prefers-reduced-motion:reduce){.skeleton-person-row:after{animation:none!important}}

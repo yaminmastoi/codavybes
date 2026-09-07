@@ -1,0 +1,37 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, Gamepad2, LoaderCircle, LockKeyhole, MoreHorizontal, Send, ShieldAlert, Sparkles, Users, Zap } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import Avatar from '../components/Avatar'
+import AuraPill from '../components/AuraPill'
+import MessageBubble from '../components/MessageBubble'
+import ReportSheet from '../components/ReportSheet'
+import { useAuth } from '../context/AuthContext'
+import { blockUser,getChatHeader,getMessages,giveMessageAura,markConversationRead,sendMessage,subscribeToConversation,toggleMessageReaction } from '../services/chatService'
+import { createRoomFromConversation } from '../services/roomService'
+import { getBondWithUser } from '../services/socialService'
+import { AppLaunchLoader } from '../components/Loaders'
+import VerifiedBadge from '../components/VerifiedBadge'
+
+function initials(name='C'){return name.trim().split(/\s+/).slice(0,2).map(p=>p[0]?.toUpperCase()).join('')||'C'}
+const STARTERS=["Quick question: what are you obsessed with lately?","Hot take: what's overrated right now?","Pick one: late-night talk or game night?"]
+
+export default function ChatDetail(){
+ const {conversationId}=useParams();const navigate=useNavigate();const {user}=useAuth();const [header,setHeader]=useState(null);const [messages,setMessages]=useState([]);const [loading,setLoading]=useState(true);const [text,setText]=useState('');const [sending,setSending]=useState(false);const [busyAura,setBusyAura]=useState(null);const [busyReaction,setBusyReaction]=useState(null);const [notice,setNotice]=useState('');const [menu,setMenu]=useState(false);const [reporting,setReporting]=useState(null);const [bond,setBond]=useState(null);const endRef=useRef(null)
+ const other=useMemo(()=>header?.type==='direct'?header.members?.find(m=>m.user_id!==user?.id):null,[header,user?.id]);const chatName=header?.type==='group'?header?.title:(other?.display_name||other?.username||'Chat')
+ const load=useCallback(async(first=false)=>{try{if(first)setLoading(true);const [h,m]=await Promise.all([getChatHeader(conversationId),getMessages(conversationId,80,null)]);setHeader(h);setMessages(m);await markConversationRead(conversationId).catch(()=>{})}catch(e){setNotice(e.message||'Conversation unavailable.')}finally{if(first)setLoading(false)}},[conversationId])
+ useEffect(()=>{load(true)},[load]);useEffect(()=>{if(!conversationId)return;let timer;return subscribeToConversation(conversationId,()=>{clearTimeout(timer);timer=setTimeout(()=>load(false),120)})},[conversationId,load]);useEffect(()=>{endRef.current?.scrollIntoView({behavior:loading?'auto':'smooth'})},[messages.length,loading]);useEffect(()=>{if(!other?.user_id){setBond(null);return}getBondWithUser(other.user_id).then(setBond).catch(()=>setBond(null))},[other?.user_id,messages.length])
+ async function submit(e){e.preventDefault();const body=text.trim();if(!body||sending)return;setSending(true);setNotice('');try{await sendMessage(conversationId,body);setText('');await load(false)}catch(err){setNotice(err.message||'Message could not be sent.')}finally{setSending(false)}}
+ async function aura(id){setBusyAura(id);setNotice('');try{const r=await giveMessageAura(id);setMessages(c=>c.map(m=>m.message_id===id?{...m,viewer_has_aura:true,aura_count:r.message_aura??m.aura_count,unique_aura_givers:r.unique_givers??m.unique_aura_givers,is_aura_moment:r.is_aura_moment??m.is_aura_moment}:m));setNotice(r.already_given?'Aura already given.':r.rank_up?`Aura +1 · ${r.rank?.name} unlocked.`:r.became_aura_moment?'Aura +1 · this message became an Aura Moment.':'Aura +1')}catch(err){setNotice(err.message||'Aura could not be given.')}finally{setBusyAura(null)}}
+ async function react(id,emoji){setBusyReaction(id);try{await toggleMessageReaction(id,emoji);await load(false)}catch(err){setNotice(err.message||'Reaction failed.')}finally{setBusyReaction(null)}}
+ async function openRoom(){setNotice('');try{const r=await createRoomFromConversation(conversationId,header?.type==='group'?`${chatName} Room`:`${chatName} + You`);navigate(`/rooms/${r.room_id}`)}catch(err){setNotice(err.message||'Could not start Room.')}}
+ async function handleBlock(){if(!other||!window.confirm(`Block @${other.username}? They won't be able to continue direct chats with you.`))return;try{await blockUser(other.user_id);navigate('/chats',{replace:true})}catch(err){setNotice(err.message||'Could not block user.')}}
+ if(loading)return <AppLaunchLoader label="Opening conversation"/>
+ return <div className="chat-detail-page chat-detail-page--modern">
+  <header className="chat-detail-head chat-detail-head--modern surface"><button className="icon-btn" onClick={()=>navigate('/chats')}><ArrowLeft size={20}/></button><div className="chat-detail-person"><Avatar initials={initials(chatName)}/><div><div className="identity-line"><strong>{chatName}</strong>{header?.type==='direct'&&<VerifiedBadge verified={other?.is_verified} size={16}/>}</div><span>{header?.type==='group'?`${header.members?.length||0} people`:bond?`${bond.bond_percent}% · ${bond.bond_label}`:`@${other?.username||'codavybes'}`}</span></div></div><div className="chat-head-actions">{other?.aura_total&&<AuraPill value={other.aura_total} size="sm"/>}<button className="chat-room-button" onClick={openRoom}><Gamepad2 size={17}/><span>Room</span></button><button className="icon-btn" onClick={()=>setMenu(v=>!v)}><MoreHorizontal size={20}/></button></div>{menu&&<div className="chat-menu surface">{header?.type==='group'?<div className="chat-menu-info"><Users size={15}/> Group controls live with the group owner.</div>:<button onClick={handleBlock}><ShieldAlert size={15}/> Block user</button>}</div>}</header>
+  <div className="chat-privacy-bar"><LockKeyhole size={13}/><span>Private conversation</span><i/> <small>Aura counts publicly; messages stay with participants.</small></div>
+  {notice&&<div className="chat-notice"><Zap size={14}/>{notice}</div>}
+  <main className="message-stream message-stream--modern">{messages.length===0&&<div className="chat-empty-modern"><div className="chat-empty-orb"><Sparkles size={24}/></div><p className="eyebrow">START WITH SOMETHING BETTER THAN “HI”</p><h2>Break the silence.</h2><p>Use a quick opener or take it straight to a Room.</p><div className="chat-starter-grid">{STARTERS.map(s=><button key={s} onClick={()=>setText(s)}>{s}</button>)}</div><button className="btn btn--outline chat-empty-room" onClick={openRoom}><Gamepad2 size={17}/> Start a Room</button></div>}{messages.map(message=><MessageBubble key={message.message_id} message={message} isMine={message.sender_id===user?.id} busyAura={busyAura===message.message_id} busyReaction={busyReaction===message.message_id} onAura={aura} onReaction={react} onReport={setReporting}/>)}<div ref={endRef}/></main>
+  <form className="message-composer message-composer--modern surface" onSubmit={submit}><button type="button" className="composer-room" onClick={openRoom} aria-label="Start a Room"><Gamepad2 size={18}/></button><div className="composer-input-wrap"><input value={text} onChange={e=>setText(e.target.value)} maxLength={1200} placeholder={`Message ${chatName}`}/><span>{text.length?`${text.length}/1200`:'CodaChat'}</span></div><button className="composer-send" disabled={!text.trim()||sending}>{sending?<LoaderCircle className="spin" size={18}/>:<Send size={18}/>}</button></form>
+  {reporting&&<ReportSheet message={reporting} onClose={()=>setReporting(null)} onReported={setNotice}/>} 
+ </div>
+}

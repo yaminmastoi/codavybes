@@ -1,0 +1,69 @@
+name: Build CodaVybes Android Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  android-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - run: npm install
+      - name: Build web client
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run build
+      - working-directory: platforms/mobile-capacitor
+        run: npm install && npx cap add android && npx cap sync android
+      - run: node scripts/apply-android-branding.mjs
+
+      - name: Decode signing keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > platforms/mobile-capacitor/android/app/codavybes-release.jks
+
+      - name: Add release signing configuration
+        shell: bash
+        run: |
+          cat >> platforms/mobile-capacitor/android/app/build.gradle <<'GRADLE'
+
+          android {
+              signingConfigs {
+                  codavybesRelease {
+                      storeFile file(System.getenv("CODAVYBES_KEYSTORE_FILE"))
+                      storePassword System.getenv("CODAVYBES_STORE_PASSWORD")
+                      keyAlias System.getenv("CODAVYBES_KEY_ALIAS")
+                      keyPassword System.getenv("CODAVYBES_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.codavybesRelease
+                  }
+              }
+          }
+          GRADLE
+
+      - name: Build signed APK and AAB
+        working-directory: platforms/mobile-capacitor/android
+        env:
+          CODAVYBES_KEYSTORE_FILE: ${{ github.workspace }}/platforms/mobile-capacitor/android/app/codavybes-release.jks
+          CODAVYBES_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          CODAVYBES_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CODAVYBES_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: chmod +x gradlew && ./gradlew assembleRelease bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodaVybes-Android-Release
+          path: |
+            platforms/mobile-capacitor/android/app/build/outputs/apk/release/*.apk
+            platforms/mobile-capacitor/android/app/build/outputs/bundle/release/*.aab

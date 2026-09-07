@@ -1,0 +1,54 @@
+name: Build CodaVybes Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Build CodaVybes web client
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Install Capacitor
+        working-directory: platforms/mobile-capacitor
+        run: npm install
+
+      - name: Generate Android project
+        working-directory: platforms/mobile-capacitor
+        run: npx cap add android
+
+      - name: Sync web assets
+        working-directory: platforms/mobile-capacitor
+        run: npx cap sync android
+
+      - name: Apply CodaVybes branding
+        run: node scripts/apply-android-branding.mjs
+
+      - name: Build installable debug APK
+        working-directory: platforms/mobile-capacitor/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodaVybes-Android-APK
+          path: platforms/mobile-capacitor/android/app/build/outputs/apk/debug/app-debug.apk

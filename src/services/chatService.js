@@ -29,13 +29,26 @@ export async function getChatHeader(conversationId) {
 
 export async function getMessages(conversationId, limit = 60, before = null) {
   requireSupabase()
-  const { data, error } = await supabase.rpc('get_messages', {
-    p_conversation_id: conversationId,
-    p_limit: limit,
-    p_before: before,
-  })
-  if (error) throw error
-  const rows = (data ?? []).reverse()
+  const [messagesResult, receiptsResult] = await Promise.all([
+    supabase.rpc('get_messages', {
+      p_conversation_id: conversationId,
+      p_limit: limit,
+      p_before: before,
+    }),
+    supabase.rpc('get_message_receipts', {
+      p_conversation_id: conversationId,
+      p_limit: limit,
+      p_before: before,
+    }),
+  ])
+  if (messagesResult.error) throw messagesResult.error
+  if (receiptsResult.error) throw receiptsResult.error
+  const receipts = new Map((receiptsResult.data ?? []).map((row) => [row.message_id, row]))
+  const rows = (messagesResult.data ?? []).reverse().map((row) => ({
+    ...row,
+    delivered_at: receipts.get(row.message_id)?.delivered_at ?? null,
+    viewed_at: receipts.get(row.message_id)?.viewed_at ?? null,
+  }))
   return enrichVerified(rows, 'sender_id', 'sender_verified')
 }
 
@@ -100,6 +113,27 @@ export async function markConversationRead(conversationId) {
   if (error) throw error
 }
 
+export async function clearConversation(conversationId) {
+  requireSupabase()
+  const { data, error } = await supabase.rpc('clear_conversation', { p_conversation_id: conversationId })
+  if (error) throw error
+  return data
+}
+
+export async function deleteMessage(messageId) {
+  requireSupabase()
+  const { data, error } = await supabase.rpc('delete_message', { p_message_id: messageId })
+  if (error) throw error
+  return data
+}
+
+export async function markMyMessagesDelivered() {
+  requireSupabase()
+  const { data, error } = await supabase.rpc('mark_my_messages_delivered')
+  if (error) throw error
+  return data
+}
+
 export async function blockUser(targetUserId) {
   requireSupabase()
   const { data, error } = await supabase.rpc('block_user', { p_target_user: targetUserId })
@@ -158,5 +192,46 @@ export function subscribeToConversation(conversationId, onChange) {
 
   return () => {
     supabase.removeChannel(channel)
+  }
+}
+
+export function subscribeToIncomingMessages(onChange) {
+  requireSupabase()
+  const channel = supabase
+    .channel(`vybe-chat-delivery-${Math.random().toString(36).slice(2)}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, onChange)
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
+export function createTypingChannel(conversationId, currentUser, onTyping) {
+  requireSupabase()
+  const channel = supabase
+    .channel(`chat-typing:${conversationId}`, { config: { broadcast: { self: false } } })
+    .on('broadcast', { event: 'typing' }, ({ payload }) => {
+      if (!payload || payload.user_id === currentUser?.id) return
+      onTyping(payload)
+    })
+    .subscribe()
+
+  return {
+    send(isTyping) {
+      return channel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          user_id: currentUser?.id,
+          display_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || 'Someone',
+          is_typing: Boolean(isTyping),
+          sent_at: Date.now(),
+        },
+      })
+    },
+    close() {
+      supabase.removeChannel(channel)
+    },
   }
 }

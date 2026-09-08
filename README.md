@@ -1,5 +1,11 @@
 # CodaVybes V13
 
+## V13.4 — Responsive chat + cross-age discovery
+
+V13.4 fixes compact/expanded desktop sidebar behavior and makes the chat viewport, messages and composer responsive across mobile, tablet and desktop. It also allows every eligible active 10+ account to discover/connect across age groups while preserving symmetric block enforcement, account restrictions and the existing mutual-Keep chat flow.
+
+For an existing V13.3 database, run only `supabase/migrations/016_cross_age_discovery_chat.sql`. See `V13_4_SETUP.md`.
+
 # CodaVybes V12 — Games Expansion + Feed Layout Fix
 
 V12 expands Rooms to **8 server-authoritative games**, seeds an asserted **10,000+ private question/prompt bank**, updates HQ game-question controls, and fixes the cramped mobile feed identity header shown in V11.2. Existing auth, Aura, Certified verification, responsive shells, commerce feature gates and realtime protections remain intact.
@@ -104,6 +110,21 @@ V11.2 changes blue-tick verification to a Certified-rank waitlist. Run `supabase
 
 See `V13_2_UI_FIX.md`.
 
-## V13.4 Analytics Command Center
+## V13.5 chat controls and live status
 
-V13.4 adds live Web/Android/Windows presence, real product activity, version/device health, privacy-aware telemetry and HQ release control. See `V13_4_ANALYTICS_SETUP.md` and run only migration `016_analytics_command_center.sql` after an existing 001–015 database.
+- Three-dot menu now includes per-user **Clear chat**.
+- Senders can delete their own messages for everyone.
+- Live `is typing…` status uses Supabase Realtime Broadcast.
+- Message receipts show one grey tick for pending/offline, two grey ticks for delivered, and two red ticks for viewed.
+- Run `supabase/migrations/017_chat_controls_receipts.sql` after migration 016.
+
+See `V13_5_SETUP.md` for deployment details.
+
+## V13.6 mobile navigation and Android alerts
+
+- Existing Home, Discover, Rooms, Chats and You links now use a floating mobile navigation surface.
+- Down-scroll hides the bar and up-scroll restores it.
+- Capacitor Android builds use native Local Notifications with Android 13+ permission handling and a dedicated alert channel.
+- No database migration is required.
+
+See `V13_6_SETUP.md` before rebuilding the APK.

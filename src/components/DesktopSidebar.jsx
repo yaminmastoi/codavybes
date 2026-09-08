@@ -30,7 +30,13 @@ function initials(name = 'CodaVybes') {
 }
 
 function SideLink({ to, icon: Icon, label, end = false }) {
-  return <NavLink to={to} end={end} className={({ isActive }) => `desktop-side-link ${isActive ? 'is-active' : ''}`}>
+  return <NavLink
+    to={to}
+    end={end}
+    aria-label={label}
+    title={label}
+    className={({ isActive }) => `desktop-side-link ${isActive ? 'is-active' : ''}`}
+  >
     <span><Icon size={20}/></span>
     <strong>{label}</strong>
   </NavLink>

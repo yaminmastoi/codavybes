@@ -1,5 +1,30 @@
-# CodaVybes platform clients
+# VYBE platform shells
 
-The root React/Vite app is shared across Web, PWA, Android/iOS (Capacitor), and Windows/macOS (Tauri). Do not fork Supabase authorization or business logic between clients.
+The root Vite application is the shared product. Do not fork backend logic between clients.
 
-See `/PLATFORM_RELEASE_GUIDE.md` for build workflows and release steps.
+## Web / PWA
+
+Build from the repository root:
+
+```bash
+npm install
+npm run build
+```
+
+Deploy `dist/` to Vercel. The PWA manifest and service worker are already in `public/`.
+
+## Android / iOS
+
+See `mobile-capacitor/README.md`.
+
+Capacitor copies the same root `dist/` into native projects. Keep Supabase/RLS as the source of truth.
+
+## Windows / macOS
+
+See `desktop-tauri/README.md`.
+
+Tauri embeds the same root `dist/` in a lightweight desktop application.
+
+## Important auth note
+
+Email/password works naturally inside all clients. Google/social OAuth should use system-browser + deep-link/callback handling before App Store / Play Store / desktop production distribution. Do not ship embedded-webview OAuth as the final auth implementation.

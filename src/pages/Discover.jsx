@@ -131,7 +131,7 @@ export default function Discover() {
 
     {searchOpen && <div className="discover-search surface"><Search size={17}/><input autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search people, interests, @username…"/><button onClick={() => { setSearchQuery(''); setSearchOpen(false) }} aria-label="Close search"><X size={16}/></button></div>}
 
-    <div className="age-safety-chip"><ShieldCheck size={14}/><span>Discovery is automatically kept inside your age-safety pool.</span></div>
+    <div className="age-safety-chip"><ShieldCheck size={14}/><span>All eligible members can appear here. Blocked or restricted accounts stay hidden.</span></div>
 
     <div className="filter-row discover-tabs discover-tabs--v133">
       <button className={tab === 'for_you' ? 'is-active' : ''} onClick={() => { setTab('for_you'); setSearchParams({ tab: 'for_you' }) }}>For You</button>

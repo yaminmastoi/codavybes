@@ -1,20 +1,20 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "CodaVybes",
-  "version": "13.4.0",
-  "identifier": "com.codabite.codavybes",
+  "productName": "VYBE",
+  "version": "1.0.0",
+  "identifier": "app.vybe.desktop",
   "build": {
-    "beforeDevCommand": "npm --prefix ../.. run dev -- --host 127.0.0.1",
+    "beforeDevCommand": "cd ../../.. && npm run dev -- --host 127.0.0.1",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "npm --prefix ../.. run build",
+    "beforeBuildCommand": "cd ../../.. && npm run build",
     "frontendDist": "../../../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "CodaVybes",
-        "width": 1360,
-        "height": 860,
+        "title": "VYBE",
+        "width": 1280,
+        "height": 820,
         "minWidth": 900,
         "minHeight": 620,
         "resizable": true,
@@ -28,19 +28,6 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis",
-      "msi"
-    ],
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.ico",
-      "icons/icon.png"
-    ],
-    "publisher": "CodaBite",
-    "shortDescription": "CodaVybes social app",
-    "longDescription": "CodaVybes powered by CodaBite \u2014 meet people, build bonds, play, post and earn Aura."
+    "targets": "all"
   }
 }

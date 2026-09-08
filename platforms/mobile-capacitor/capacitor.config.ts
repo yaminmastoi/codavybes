@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.codabite.codavybes',
-  appName: 'CodaVybes',
+  appId: 'app.vybe.social',
+  appName: 'VYBE',
   webDir: '../../dist',
   server: {
     androidScheme: 'https',
@@ -13,6 +13,9 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       resize: 'body',
+    },
+    LocalNotifications: {
+      iconColor: '#665CFF',
     },
   },
 }

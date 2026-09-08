@@ -22,7 +22,7 @@ export const adminService = {
   session: () => rpc('admin_get_session'),
   dashboard: () => rpc('admin_get_dashboard'),
   users: (query = '', status = 'all', limit = 50, offset = 0) => rpc('admin_list_users', { p_query: query, p_status: status, p_limit: limit, p_offset: offset }),
-  user: async (id) => { const [base,wallet,analytics] = await Promise.all([rpc('admin_get_user', { p_user: id }), rpc('admin_get_user_wallet', { p_user: id }), rpc('admin_get_user_analytics', { p_user: id }).catch(()=>null)]); return { ...base, wallet_balance: wallet?.coin_balance ?? 0, lifetime_topup_coins: wallet?.lifetime_topup_coins ?? 0, analytics } },
+  user: async (id) => { const [base,wallet] = await Promise.all([rpc('admin_get_user', { p_user: id }), rpc('admin_get_user_wallet', { p_user: id })]); return { ...base, wallet_balance: wallet?.coin_balance ?? 0, lifetime_topup_coins: wallet?.lifetime_topup_coins ?? 0 } },
   setUserStatus: (id, status, reason, until = null) => rpc('admin_set_user_status', { p_user: id, p_status: status, p_reason: reason, p_until: until }),
   authAction: (id, action, duration = null) => edge('hq-auth-action', { user_id: id, action, duration }),
   changeUsername: (id, username, reason) => rpc('admin_change_username', { p_user: id, p_username: username, p_reason: reason }),
@@ -68,17 +68,6 @@ export const adminService = {
     p_cta_url: post.cta_url || null, p_pinned_until: post.pinned_until || null,
   }),
   setPlatformPostActive: (id, active, reason = 'Platform post status') => rpc('admin_set_platform_post_active', { p_id: id, p_active: !!active, p_reason: reason }),
-  analyticsOverview: (hours = 24) => rpc('admin_get_analytics_overview', { p_hours: Number(hours) }),
-  liveUsers: (limit = 120) => rpc('admin_list_live_users', { p_limit: Number(limit) }),
-  analyticsErrors: (limit = 80) => rpc('admin_list_analytics_errors', { p_limit: Number(limit) }),
-  activityStream: (limit = 120) => rpc('admin_list_activity_stream', { p_limit: Number(limit) }),
-  appReleases: () => rpc('admin_list_app_releases'),
-  upsertAppRelease: (item) => rpc('admin_upsert_app_release', {
-    p_id: item.id ?? null, p_platform: item.platform, p_version: item.version, p_build_number: Number(item.build_number || 1),
-    p_download_url: item.download_url || null, p_release_notes: item.release_notes || '',
-    p_required: !!item.required, p_active: item.active !== false,
-  }),
-
   questions: (game = 'all') => rpc('admin_list_game_questions', { p_game: game }),
   upsertQuestion: (q, reason = 'Game question update') => rpc('admin_upsert_game_question', {
     p_id: q.id ?? null, p_game: q.game_type, p_prompt: q.prompt,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Bell, Check, ChevronRight, Coins, Cookie, Crown, FileText, KeyRound, Laptop, LogOut, MapPin, Moon, Palette, Shield, ShoppingBag, SlidersHorizontal, Sun, Volume2 } from 'lucide-react'
+import { ArrowLeft, Bell, Check, ChevronRight, Coins, Cookie, Crown, FileText, KeyRound, Laptop, LogOut, Moon, Palette, Shield, ShoppingBag, SlidersHorizontal, Sun, Volume2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -7,10 +7,9 @@ import { useCommerce } from '../context/CommerceContext'
 import { signOut } from '../services/authService'
 import { getPreferences, updatePreferences } from '../services/settingsService'
 import { checkUsernameAvailability, claimUsername } from '../services/onboardingService'
-import { getSystemNotificationPermission, requestSystemNotificationPermission, showSystemNotification, systemNotificationsSupported } from '../services/systemNotificationService'
+import { checkSystemNotificationPermission, getSystemNotificationPermission, requestSystemNotificationPermission, showSystemNotification, systemNotificationsSupported } from '../services/systemNotificationService'
 import InstallVybeButton from '../components/InstallVybeButton'
 import VerificationSettings from '../components/VerificationSettings'
-import { analyticsConsentEnabled, getLocationSharingEnabled, setPreciseLocationSharing, telemetrySummary } from '../services/telemetryService'
 
 function Toggle({ label, description, value, onChange, disabled = false }) {
   return <label className={`settings-toggle ${disabled ? 'is-disabled' : ''}`}><span><strong>{label}</strong><small>{description}</small></span><input type="checkbox" checked={!!value} disabled={disabled} onChange={(e) => onChange(e.target.checked)}/><i/></label>
@@ -33,12 +32,9 @@ export default function Settings() {
   const [usernameCheck, setUsernameCheck] = useState(null)
   const [usernameBusy, setUsernameBusy] = useState(false)
   const [systemPermission, setSystemPermission] = useState(getSystemNotificationPermission())
-  const [locationSharing, setLocationSharing] = useState(getLocationSharingEnabled())
-  const [locationBusy, setLocationBusy] = useState(false)
-  const [telemetryState, setTelemetryState] = useState(telemetrySummary())
-  const preciseLocationEligible = (() => { const d=onboarding?.birth_date?new Date(`${onboarding.birth_date}T00:00:00`):null; if(!d||Number.isNaN(d.getTime()))return true; const now=new Date(); let age=now.getFullYear()-d.getFullYear(); const m=now.getMonth()-d.getMonth(); if(m<0||(m===0&&now.getDate()<d.getDate()))age--; return age>=18 })()
 
   useEffect(() => {
+    checkSystemNotificationPermission().then(setSystemPermission).catch(() => setSystemPermission('unsupported'))
     getPreferences().then((p) => {
       setPrefs(p)
       if (p?.theme_preference && !localStorage.getItem('vybe-theme')) setTheme(p.theme_preference)
@@ -59,26 +55,15 @@ export default function Settings() {
   }
 
   const enableSystemNotifications = async () => {
-    const permission = await requestSystemNotificationPermission()
-    setSystemPermission(permission)
-    if (permission === 'granted') { await set('system_notifications', true); window.dispatchEvent(new CustomEvent('vybe:system-notifications', { detail: true })) }
-    else if (permission === 'denied') { await set('system_notifications', false); window.dispatchEvent(new CustomEvent('vybe:system-notifications', { detail: false })); setNotice('System notifications are blocked in your browser settings.') }
-    else setNotice('System notifications are not supported on this device.')
-  }
-
-
-  const changeLocationSharing = async (enabled) => {
-    if (locationBusy) return
-    setLocationBusy(true); setNotice('')
     try {
-      const result = await setPreciseLocationSharing(enabled)
-      setLocationSharing(result.enabled)
-      setTelemetryState(telemetrySummary())
-      setNotice(result.enabled ? 'Precise location sharing enabled for this device.' : 'Precise location sharing disabled.')
-    } catch (e) {
-      setLocationSharing(getLocationSharingEnabled())
-      setNotice(e.message)
-    } finally { setLocationBusy(false) }
+      const permission = await requestSystemNotificationPermission()
+      setSystemPermission(permission)
+      if (permission === 'granted') { await set('system_notifications', true); window.dispatchEvent(new CustomEvent('vybe:system-notifications', { detail: true })) }
+      else if (permission === 'denied') { await set('system_notifications', false); window.dispatchEvent(new CustomEvent('vybe:system-notifications', { detail: false })); setNotice('Notifications are blocked. Allow them from this app’s device settings, then return here.') }
+      else setNotice('System notifications are not supported on this device.')
+    } catch (error) {
+      setNotice(error?.message || 'Could not enable notifications. Rebuild the Android app after syncing the native plugin.')
+    }
   }
 
   useEffect(() => { setUsernameDraft(onboarding?.username || '') }, [onboarding?.username])
@@ -143,16 +128,6 @@ export default function Settings() {
       {prefs && <><Toggle label="Sound effects" description="Aura and game UI sound preference." value={prefs.sound_effects} onChange={(v) => set('sound_effects', v)}/><Toggle label="Reduce motion" description="Use calmer transitions and effects." value={prefs.reduce_motion} onChange={(v) => set('reduce_motion', v)}/><Toggle label="Online status" description="Let eligible people see when you're active." value={prefs.show_online_status} onChange={(v) => set('show_online_status', v)}/></>}
     </section>
 
-
-    <section className="settings-section surface telemetry-settings">
-      <div className="settings-section__title"><MapPin size={18}/><div><p className="eyebrow">PRIVACY & TELEMETRY</p><h3>This device</h3></div></div>
-      <div className="settings-row"><span><strong>{telemetryState.platform.toUpperCase()} · v{telemetryState.version}</strong><small>Platform and app version are used for reliability and update diagnostics.</small></span><Shield size={17}/></div>
-      <Toggle label="Share precise location" description="Optional for 18+ accounts. Sends latitude/longitude only after this device grants location permission; you can turn it off any time." value={locationSharing} disabled={locationBusy||!preciseLocationEligible} onChange={changeLocationSharing}/>
-      <p className="settings-caption">Operational session telemetry helps CodaVybes detect active sessions, app versions and reliability. Optional analytics follow your privacy choice. Precise coordinates are never collected unless an eligible adult account enables the separate location toggle.</p>
-      {!analyticsConsentEnabled() && <p className="settings-caption settings-caption--warn">Optional analytics are currently off. Use “Review privacy choices” below before enabling precise location.</p>}
-      {!preciseLocationEligible && <p className="settings-caption settings-caption--warn">Precise location sharing is unavailable for under-18 accounts. Coarse operational region signals may still be available where the hosting edge supplies them.</p>}
-    </section>
-
     <section className="settings-section surface install-settings-section">
       <div className="settings-section__title"><Laptop size={18}/><div><p className="eyebrow">THIS DEVICE</p><h3>Install CodaVybes</h3></div></div>
       <div className="settings-install-body"><p>Install the web app for a dedicated window, home-screen icon and faster return to your CodaVybes.</p><InstallVybeButton compact/></div>
@@ -171,7 +146,7 @@ export default function Settings() {
       <Link to="/terms"><FileText size={18}/><span><strong>Terms of Use</strong><small>Community and product rules</small></span><ChevronRight size={17}/></Link>
     </section>
 
-    <button className="btn btn--outline settings-consent-reset" onClick={()=>{try{localStorage.removeItem('codavybes-consent-v1')}catch{};window.dispatchEvent(new CustomEvent('codavybes:consent-reset'));setTelemetryState(telemetrySummary());setNotice('Privacy choice reset. The consent panel is open again.')}}><Cookie size={18}/> Review privacy choices</button>
+    <button className="btn btn--outline settings-consent-reset" onClick={()=>{try{localStorage.removeItem('codavybes-consent-v1')}catch{};window.dispatchEvent(new CustomEvent('codavybes:consent-reset'));setNotice('Privacy choice reset. The consent panel is open again.')}}><Cookie size={18}/> Review privacy choices</button>
     <button className="btn btn--outline settings-signout" onClick={signOut}><LogOut size={18}/> Sign out</button>
   </div>
 }

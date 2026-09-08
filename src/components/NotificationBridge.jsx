@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getPreferences } from '../services/settingsService'
-import { registerVybeServiceWorker, showSystemNotification } from '../services/systemNotificationService'
+import { registerSystemNotificationActionListener, registerVybeServiceWorker, showSystemNotification } from '../services/systemNotificationService'
 import { subscribeAnnouncements, subscribeNotifications } from '../services/notificationService'
 
 export default function NotificationBridge() {
@@ -12,6 +12,11 @@ export default function NotificationBridge() {
     const updateEnabled = (event) => { enabled = !!event.detail }
     window.addEventListener('vybe:system-notifications', updateEnabled)
     registerVybeServiceWorker().catch(() => null)
+    let disposed = false
+    let stopNativeAction = () => {}
+    registerSystemNotificationActionListener((link) => {
+      if (typeof link === 'string' && link.startsWith('/')) window.location.assign(link)
+    }).then((stop) => { if (disposed) stop(); else stopNativeAction = stop }).catch(() => {})
     getPreferences().then((p) => { enabled = !!p.system_notifications }).catch(() => {})
     const stopUser = subscribeNotifications(user.id, (payload) => {
       if (payload?.eventType !== 'INSERT' || !payload?.new) return
@@ -25,7 +30,7 @@ export default function NotificationBridge() {
       if (!enabled || payload?.eventType !== 'INSERT' || !payload?.new) return
       showSystemNotification({ ...payload.new, link: payload.new.cta_url || '/notifications' }).catch(() => {})
     }, 'system-bridge')
-    return () => { stopUser(); stopAnnouncements(); window.removeEventListener('vybe:system-notifications', updateEnabled) }
+    return () => { disposed = true; stopUser(); stopAnnouncements(); stopNativeAction(); window.removeEventListener('vybe:system-notifications', updateEnabled) }
   }, [user?.id, refreshOnboarding])
   return null
 }

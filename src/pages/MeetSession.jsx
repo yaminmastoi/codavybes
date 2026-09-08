@@ -96,7 +96,7 @@ export default function MeetSession() {
     <section className="meet-intro surface">
       <div className="meet-intro__top"><div><p className="eyebrow"><Sparkles size={13}/> TEMPORARY MEET</p><h1>See if you click.</h1></div><AuraPill value={other.aura_total || 1} size="sm"/></div>
       <div className="icebreaker-card"><span>ICEBREAKER</span><strong>{session?.icebreaker}</strong></div>
-      <div className="age-safety-chip"><ShieldCheck size={14}/><span>Meet only connects people inside the same age-safety pool. Exact DOB stays private.</span></div>
+      <div className="age-safety-chip"><ShieldCheck size={14}/><span>Meet works across age groups. Exact DOB stays private and block rules remain enforced.</span></div>
     </section>
 
     {notice && <div className="notice meet-notice">{notice}</div>}

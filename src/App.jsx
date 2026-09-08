@@ -23,8 +23,6 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import LegalPage from './pages/LegalPage'
 import ConsentBanner from './components/ConsentBanner'
-import TelemetryBridge from './components/TelemetryBridge'
-import UpdateBanner from './components/UpdateBanner'
 
 export default function App() {
   return (<>
@@ -56,8 +54,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    <TelemetryBridge/>
-    <UpdateBanner/>
     <ConsentBanner/>
   </>)
 }

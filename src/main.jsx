@@ -9,7 +9,7 @@ import './styles/polish.css'
 import './styles/v13.css'
 import './styles/v13_2.css'
 import './styles/v13_3.css'
-import './styles/v13_4.css'
+import './styles/v13_4_responsive.css'
 
 
 if (typeof window !== 'undefined') {
@@ -19,7 +19,7 @@ if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('vybe:install-available'))
   })
 
-  if ('serviceWorker' in navigator) {
+  if (!window.Capacitor?.isNativePlatform?.() && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/vybe-sw.js').catch((error) => console.warn('CodaVybes service worker:', error))
     }, { once: true })

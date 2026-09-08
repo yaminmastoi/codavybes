@@ -1,12 +1,12 @@
 [package]
-name = "codavybes"
-version = "13.3.0"
-description = "CodaVybes powered by CodaBite"
-authors = ["CodaBite"]
+name = "vybe"
+version = "1.0.0"
+description = "VYBE desktop client"
+authors = ["VYBE"]
 edition = "2021"
 
 [lib]
-name = "codavybes_lib"
+name = "vybe_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

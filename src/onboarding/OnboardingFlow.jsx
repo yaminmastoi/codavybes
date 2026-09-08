@@ -325,9 +325,9 @@ function DobStep({ onNext }) {
   return <section className="step">
     <p className="eyebrow">AGE & SAFETY</p>
     <h2>When's your birthday?</h2>
-    <p className="muted copy">DOB is private. It powers the 10+ age gate and age-safety pools, and normal users cannot edit it later from Settings.</p>
+    <p className="muted copy">DOB is private. It powers the 10+ eligibility gate and age-aware safety controls, and normal users cannot edit it later from Settings.</p>
     <label>Birthday<div className="input-wrap date-input"><input type="date" value={birthDate} onChange={(e) => setBirthDateValue(e.target.value)} max={today}/></div></label>
-    <div className="notice"><ShieldCheck size={17}/> Current launch rule: age 10+. Discovery is separated into 10–12, 13–17 and 18+ safety pools. The backend—not the browser—decides eligibility.</div>
+    <div className="notice"><ShieldCheck size={17}/> Current launch rule: age 10+. Eligible members can discover and connect across age groups; blocks and account restrictions decide availability.</div>
     {error && <div className="notice error-box">{error}</div>}
     <button className="btn btn--primary" onClick={submit} disabled={!birthDate || busy}>{busy ? 'Checking…' : 'Check eligibility'}</button>
   </section>

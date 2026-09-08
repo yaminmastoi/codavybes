@@ -1,6 +1,6 @@
 export default function Logo({ compact = false, markOnly = false, className = '' }) {
   return (
-    <div className={`brand ${compact ? 'brand--compact' : ''} ${markOnly ? 'brand--mark-only' : ''} ${className}`} aria-label="CodaVybes Powered by CodaBite">
+    <div className={`brand ${compact ? 'brand--compact' : ''} ${markOnly ? 'brand--mark-only' : ''} ${className}`} aria-label="CodaVybes powered by CodaBite">
       <svg className="brand-symbol" viewBox="0 0 52 52" role="img" aria-hidden="true">
         <defs>
           <linearGradient id="codaMarkA" x1="7" y1="8" x2="44" y2="44" gradientUnits="userSpaceOnUse">
@@ -12,7 +12,7 @@ export default function Logo({ compact = false, markOnly = false, className = ''
         <path d="M21.5 16.8 27 35.3l8-18.5" fill="none" stroke="var(--brand-ink)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
         <circle cx="41.4" cy="11.8" r="3.6" fill="var(--brand-highlight)"/>
       </svg>
-      {!compact && !markOnly && <span className="brand-lockup"><strong>CodaVybes</strong><small>Powered by CodaBite</small></span>}
+      {!compact && !markOnly && <span className="brand-lockup"><strong>CodaVybes</strong><small>powered by CodaBite</small></span>}
     </div>
   )
 }

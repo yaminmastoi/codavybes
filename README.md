@@ -1,5 +1,15 @@
 # CodaVybes V13
 
+## V13.12 — For You inventory + promotions delivery
+
+V13.12 fixes promotions disappearing when the organic feed has fewer than six posts, automatically enables Feed ads when an active campaign is saved, exposes accurate campaign state in HQ, and reinstalls the all-public-post For You RPC. Run `supabase/migrations/019_fyp_promotions_delivery.sql` after migration 018. See `V13_12_SETUP.md`.
+
+## V13.11 — Moment thread alignment + platform parity guard
+
+V13.11 repairs Moment/reply layout from 280px mobile widths through desktop and adds an automated check proving that Web/PWA, Android Capacitor and Windows Tauri package the same shared routes and frontend output. No database migration is required.
+
+Run `npm run verify:launch` and read `V13_11_LAUNCH_READINESS.md` before release packaging.
+
 ## V13.4 — Responsive chat + cross-age discovery
 
 V13.4 fixes compact/expanded desktop sidebar behavior and makes the chat viewport, messages and composer responsive across mobile, tablet and desktop. It also allows every eligible active 10+ account to discover/connect across age groups while preserving symmetric block enforcement, account restrictions and the existing mutual-Keep chat flow.

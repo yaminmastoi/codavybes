@@ -39,7 +39,7 @@ async function makeCardBlob(item,themeKey='midnight'){
   ctx.fillStyle=t.accent;ctx.beginPath();roundRect(ctx,102,112,126,38,19);ctx.fill()
   ctx.fillStyle=t.bg;ctx.font='700 18px system-ui';ctx.fillText('CODACARD',126,138)
   ctx.fillStyle=t.fg;ctx.font='800 42px system-ui';ctx.fillText('CodaVybes',102,225)
-  ctx.globalAlpha=.66;ctx.font='600 22px system-ui';ctx.fillText('Powered by CodaBite',102,262);ctx.globalAlpha=1
+  ctx.globalAlpha=.66;ctx.font='600 22px system-ui';ctx.fillText('powered by CodaBite',102,262);ctx.globalAlpha=1
   const user=safeText(item.display_name||item.username||'CodaVybes User');const handle=item.username?`@${item.username}`:'@codavybes'
   ctx.font='800 34px system-ui';ctx.fillText(user,102,368);ctx.globalAlpha=.65;ctx.font='500 22px system-ui';ctx.fillText(handle,102,408);ctx.globalAlpha=1
   ctx.font='800 54px system-ui';const lines=wrap(ctx,item.content_text||'',800).slice(0,7);let y=535;for(const line of lines){ctx.fillText(line,102,y);y+=68}
@@ -59,7 +59,7 @@ export default function ShareMomentModal({item,onClose}){
   const copy=async()=>{await navigator.clipboard.writeText(`${caption}\n${url}`);await log('copy');setNotice('Caption + link copied.')}
   return <div className="share-modal-backdrop" onMouseDown={(e)=>e.target===e.currentTarget&&onClose()}><section className="share-modal surface" role="dialog" aria-modal="true">
     <header><div><p className="eyebrow"><Sparkles size={13}/> CODACARD</p><h2>Make the share look expensive.</h2><span>Your Aura, rank and moment become a branded social card.</span></div><button className="icon-btn" onClick={onClose}><X size={19}/></button></header>
-    <div className={`share-preview share-preview--${theme}`}><div className="share-preview__brand"><b>CV</b><span><strong>CodaVybes</strong><small>Powered by CodaBite</small></span></div><div className="share-preview__copy"><small>@{item.username||'codavybes'}</small><h3>{item.content_text}</h3></div><footer><strong>+{item.aura_count||0} Aura</strong><span>{item.author_rank?.name||'NEW VIBE'}</span></footer></div>
+    <div className={`share-preview share-preview--${theme}`}><div className="share-preview__brand"><b>CV</b><span><strong>CodaVybes</strong><small>powered by CodaBite</small></span></div><div className="share-preview__copy"><small>@{item.username||'codavybes'}</small><h3>{item.content_text}</h3></div><footer><strong>+{item.aura_count||0} Aura</strong><span>{item.author_rank?.name||'NEW VIBE'}</span></footer></div>
     <div className="share-theme-row">{Object.entries(THEMES).map(([key,v])=><button key={key} className={theme===key?'is-active':''} onClick={()=>setTheme(key)}><i style={{background:v.bg,borderColor:v.accent}}/><span>{v.label}</span>{theme===key&&<Check size={13}/>}</button>)}</div>
     <div className="share-platform-grid">
       <button onClick={()=>native('instagram')}><InstagramGlyph size={20}/><span>Instagram</span></button>

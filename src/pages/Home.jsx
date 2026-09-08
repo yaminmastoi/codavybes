@@ -18,12 +18,19 @@ import { useCommerce } from '../context/CommerceContext'
 function initials(name = 'CodaVybes') { return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'CV' }
 
 function mixSponsored(items, promotions) {
-  if (!items.length || !promotions.length) return items.map((item)=>({kind:'post',item}))
-  const maxSponsored = Math.min(2, promotions.length, Math.floor(items.length / 6))
+  if (!promotions.length) return items.map((item)=>({kind:'post',item}))
+  if (!items.length) return [{kind:'sponsor',item:promotions[0]}]
+
+  // A small community must still be able to run its first campaign. With fewer
+  // than seven organic posts, place one sponsor after the first post. As the
+  // feed grows, return to the low-frequency 7/14-post cadence.
+  const firstSponsorAfter = items.length < 7 ? 0 : 6
+  const maxSponsored = Math.min(items.length >= 14 ? 2 : 1, promotions.length)
   const result=[];let sponsorIndex=0
   items.forEach((item,index)=>{
     result.push({kind:'post',item})
-    if ((index+1)%7===0 && sponsorIndex<maxSponsored) {
+    const sponsorSlot = index === firstSponsorAfter || (index === 13 && sponsorIndex === 1)
+    if (sponsorSlot && sponsorIndex<maxSponsored) {
       result.push({kind:'sponsor',item:promotions[sponsorIndex++]})
     }
   })
@@ -52,7 +59,10 @@ export default function Home() {
     setLoading(true)
     try {
       const feedPromise = mode === 'rising' ? getRisingFeed(24, 0) : getForYouFeed(24, 0)
-      const extras = mode === 'fyp' ? Promise.all([adsEnabled ? getActivePromotions(8).catch(()=>[]) : Promise.resolve([]),getPlatformPosts(2).catch(()=>[])]) : Promise.resolve([[],[]])
+      const extras = mode === 'fyp' ? Promise.all([
+        adsEnabled ? getActivePromotions(8).catch((error)=>{ console.warn('CodaVybes promotions:', error.message); return [] }) : Promise.resolve([]),
+        getPlatformPosts(4).catch((error)=>{ console.warn('CodaVybes official feed:', error.message); return [] }),
+      ]) : Promise.resolve([[],[]])
       const [dash, items, [sponsors, official]] = await Promise.all([getAuraDashboard(), feedPromise, extras])
       setDashboard(dash);setFeed(items);setPromotions(sponsors);setPlatformPosts(official)
     } catch (error) {
@@ -86,7 +96,7 @@ export default function Home() {
 
   return <div className="page home-v13">
     <header className="home-head home-head--v13">
-      <div className="row gap-12"><Avatar initials={initials(name)} online/><div className="home-welcome"><small className="muted">CodaVybes · Powered by CodaBite</small><div className="identity-line"><h3>{name}</h3><VerifiedBadge verified={onboarding?.is_verified} size={15}/></div></div></div>
+      <div className="row gap-12"><Avatar initials={initials(name)} online/><div className="home-welcome"><small className="muted">CodaVybes · powered by CodaBite</small><div className="identity-line"><h3>{name}</h3><VerifiedBadge verified={onboarding?.is_verified} size={15}/></div></div></div>
       <div className="home-utility-row">
         <button className="top-utility-btn" onClick={()=>setAuraOpen(true)} aria-label="Open Aura rank"><Award size={18}/><span>{dashboard?.rank?.name || 'Aura'}</span></button>
         <button className="top-utility-btn top-utility-btn--icon" onClick={()=>navigate('/wallet')} aria-label="Open wallet"><WalletCards size={19}/></button>
@@ -103,7 +113,7 @@ export default function Home() {
 
     <section className="feed-tabs"><button className={feedMode==='fyp'?'is-active':''} onClick={()=>setFeedMode('fyp')}>For You</button><button className={feedMode==='rising'?'is-active':''} onClick={()=>setFeedMode('rising')}>Rising</button><button onClick={()=>navigate('/discover?tab=connections')}>Friends</button><button onClick={()=>navigate('/rooms')}>Rooms</button></section>
 
-    {feedMode==='fyp' && platformPosts.length>0 && <section className="platform-post-list">{platformPosts.slice(0,1).map(post=><PlatformPostCard key={post.id} post={post}/>)}</section>}
+    {feedMode==='fyp' && platformPosts.length>0 && <section className="platform-post-list">{platformPosts.map(post=><PlatformPostCard key={post.id} post={post}/>)}</section>}
 
     {loading ? <PageSkeleton variant="feed" count={3}/> : mixedFeed.length ? <section className="feed-list">{mixedFeed.map((entry,index)=>entry.kind==='sponsor'?<SponsoredCard key={`sponsor-${entry.item.id}-${index}`} promotion={entry.item}/>:<FeedCard key={entry.item.target_id} item={entry.item} onAura={handleAura} auraBusy={busyTarget===entry.item.target_id} currentUserId={onboarding?.user_id}/>)}</section> : <section className="feed-empty surface"><div className="feed-empty-icon"><Sparkles size={26}/></div><h3>{feedMode==='fyp'?'For You is warming up.':'Rising is quiet.'}</h3><p className="muted">{feedMode==='fyp'?'Every public post is eligible here. Publish the first one or come back as the community posts.':'Fresh public posts will appear here as they start moving.'}</p></section>}
     <AuraQuickSheet open={auraOpen} dashboard={dashboard} onClose={()=>setAuraOpen(false)}/>

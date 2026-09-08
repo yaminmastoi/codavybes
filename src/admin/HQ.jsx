@@ -128,7 +128,7 @@ export default function HQ() {
 
       {tab==='money' && <MonetizationPanel config={controls.monetization} items={shopItems} packages={topupPackages} canEdit={session.can_manage_config} onSaveConfig={async patch=>{try{setBusy(true);await adminService.updateCommerce(patch,'Monetization update');await loadCore();await loadMoney();notify('Monetization settings saved')}catch(e){notify(e.message,'error')}finally{setBusy(false)}}} onRefresh={loadMoney} notify={notify}/>}
 
-      {tab==='promotions' && <PromotionsPanel rows={promotions} canEdit={session.can_manage_config} onRefresh={loadPromotions} notify={notify}/>}
+      {tab==='promotions' && <PromotionsPanel rows={promotions} adsEnabled={!!controls.monetization?.ads_enabled} canEdit={session.can_manage_config} onRefresh={async()=>{await Promise.all([loadPromotions(),loadCore()])}} notify={notify}/>}
 
       {tab==='content' && <ContentPanel announcements={announcements} questions={questions} platformPosts={platformPosts} canEdit={session.can_manage_config} superAdmin={session.role==='super_admin'} onRefresh={loadContent} notify={notify}/>} 
 
@@ -209,12 +209,64 @@ function MonetizationPanel({ config, items, packages, canEdit, onSaveConfig, onR
   </div>
 }
 
-function PromotionsPanel({ rows, canEdit, onRefresh, notify }) {
+function PromotionsPanel({ rows, adsEnabled, canEdit, onRefresh, notify }) {
   const empty={id:null,brand_name:'',headline:'',body:'',image_url:'',destination_url:'',cta_label:'Learn more',active:true,priority:0,min_age:18,starts_at:'',ends_at:''}
   const [d,setD]=useState(empty)
   const edit=(row)=>setD({...empty,...row,starts_at:row.starts_at?new Date(row.starts_at).toISOString().slice(0,16):'',ends_at:row.ends_at?new Date(row.ends_at).toISOString().slice(0,16):''})
-  const save=async()=>{try{await adminService.upsertPromotion({...d,starts_at:d.starts_at?new Date(d.starts_at).toISOString():null,ends_at:d.ends_at?new Date(d.ends_at).toISOString():null});setD(empty);await onRefresh();notify('Sponsored promotion saved')}catch(e){notify(e.message,'error')}}
-  return <div className="hq-view"><SectionHead eyebrow="PAID PLACEMENT" title="Sponsored promotions"/><div className="hq-grid-2"><article className="hq-card"><div className="hq-card-title"><div><span>CAMPAIGN</span><h3>{d.id?'Edit promotion':'New promotion'}</h3></div><BadgeDollarSign size={18}/></div><div className="hq-form"><input placeholder="Brand name" value={d.brand_name} onChange={e=>setD(v=>({...v,brand_name:e.target.value}))}/><input placeholder="Headline" value={d.headline} onChange={e=>setD(v=>({...v,headline:e.target.value}))}/><textarea placeholder="Short sponsored copy" value={d.body} onChange={e=>setD(v=>({...v,body:e.target.value}))}/><label className="hq-url-field"><Image size={15}/><input placeholder="https://... image URL" value={d.image_url||''} onChange={e=>setD(v=>({...v,image_url:e.target.value}))}/></label><input placeholder="https://... destination URL" value={d.destination_url||''} onChange={e=>setD(v=>({...v,destination_url:e.target.value}))}/><div className="hq-field-grid"><label><span>CTA</span><input value={d.cta_label} onChange={e=>setD(v=>({...v,cta_label:e.target.value}))}/></label><label><span>Priority</span><input type="number" value={d.priority} onChange={e=>setD(v=>({...v,priority:e.target.value}))}/></label><label><span>Minimum age</span><input type="number" min="18" max="120" value={d.min_age||18} onChange={e=>setD(v=>({...v,min_age:e.target.value}))}/></label><label><span>Starts</span><input type="datetime-local" value={d.starts_at||''} onChange={e=>setD(v=>({...v,starts_at:e.target.value}))}/></label><label><span>Ends</span><input type="datetime-local" value={d.ends_at||''} onChange={e=>setD(v=>({...v,ends_at:e.target.value}))}/></label></div><label className="hq-check"><input type="checkbox" checked={!!d.active} onChange={e=>setD(v=>({...v,active:e.target.checked}))}/> Active campaign</label><div className="hq-form-actions"><button className="hq-btn hq-btn--gold" disabled={!canEdit||!d.brand_name||!d.headline} onClick={save}>Save promotion</button>{d.id&&<button className="hq-btn" onClick={()=>setD(empty)}>New campaign</button>}</div></div><p className="hq-help">CodaVybes deliberately paces sponsorships: roughly one banner after seven organic posts, with no more than two sponsored cards in a 20-post feed window. Sponsored placements are restricted to 18+ accounts by default.</p></article><article className="hq-card"><div className="hq-card-title"><div><span>LIVE INVENTORY</span><h3>{rows.filter(r=>r.active).length} active campaigns</h3></div><Radio size={18}/></div><div className="hq-promo-list">{rows.length?rows.map(r=><button key={r.id} className={`hq-promo-row ${r.active?'':'is-off'}`} onClick={()=>edit(r)}><div>{r.image_url?<img src={r.image_url} alt=""/>:<span><BadgeDollarSign size={16}/></span>}</div><section><strong>{r.brand_name}</strong><b>{r.headline}</b><small>{Number(r.impressions||0).toLocaleString()} impressions · {Number(r.clicks||0).toLocaleString()} clicks · {r.min_age||18}+</small></section><em>{r.active?'LIVE':'OFF'}</em></button>):<div className="hq-empty"><BadgeDollarSign size={28}/><h3>No campaigns yet</h3><p>Add a paid placement from an image URL and destination link.</p></div>}</div></article></div></div>
+  const save=async()=>{
+    try {
+      await adminService.upsertPromotion({...d,starts_at:d.starts_at?new Date(d.starts_at).toISOString():null,ends_at:d.ends_at?new Date(d.ends_at).toISOString():null})
+      if(d.active&&!adsEnabled)await adminService.updateCommerce({ads_enabled:true},'Enable feed ads for active promotion')
+      setD(empty)
+      await onRefresh()
+      notify(d.active?'Promotion is live and Feed ads are enabled':'Promotion saved as inactive')
+    } catch(e) { notify(e.message,'error') }
+  }
+  const campaignState=(row)=>{
+    const now=Date.now()
+    if(!row.active)return'OFF'
+    if(row.starts_at&&new Date(row.starts_at).getTime()>now)return'SCHEDULED'
+    if(row.ends_at&&new Date(row.ends_at).getTime()<=now)return'EXPIRED'
+    return adsEnabled?'LIVE':'ADS OFF'
+  }
+
+  return <div className="hq-view">
+    <SectionHead eyebrow="PAID PLACEMENT" title="Sponsored promotions"/>
+    {!adsEnabled&&<div className="hq-alert"><BadgeDollarSign size={18}/><span><strong>Feed ads are currently off.</strong> Saving an active campaign will enable them automatically.</span></div>}
+    <div className="hq-grid-2">
+      <article className="hq-card">
+        <div className="hq-card-title"><div><span>CAMPAIGN</span><h3>{d.id?'Edit promotion':'New promotion'}</h3></div><BadgeDollarSign size={18}/></div>
+        <div className="hq-form">
+          <input placeholder="Brand name" value={d.brand_name} onChange={e=>setD(v=>({...v,brand_name:e.target.value}))}/>
+          <input placeholder="Headline" value={d.headline} onChange={e=>setD(v=>({...v,headline:e.target.value}))}/>
+          <textarea placeholder="Short sponsored copy" value={d.body} onChange={e=>setD(v=>({...v,body:e.target.value}))}/>
+          <label className="hq-url-field"><Image size={15}/><input placeholder="https://... image URL" value={d.image_url||''} onChange={e=>setD(v=>({...v,image_url:e.target.value}))}/></label>
+          <input placeholder="https://... destination URL" value={d.destination_url||''} onChange={e=>setD(v=>({...v,destination_url:e.target.value}))}/>
+          <div className="hq-field-grid">
+            <label><span>CTA</span><input value={d.cta_label} onChange={e=>setD(v=>({...v,cta_label:e.target.value}))}/></label>
+            <label><span>Priority</span><input type="number" value={d.priority} onChange={e=>setD(v=>({...v,priority:e.target.value}))}/></label>
+            <label><span>Minimum age</span><input type="number" min="18" max="120" value={d.min_age||18} onChange={e=>setD(v=>({...v,min_age:e.target.value}))}/></label>
+            <label><span>Starts</span><input type="datetime-local" value={d.starts_at||''} onChange={e=>setD(v=>({...v,starts_at:e.target.value}))}/></label>
+            <label><span>Ends</span><input type="datetime-local" value={d.ends_at||''} onChange={e=>setD(v=>({...v,ends_at:e.target.value}))}/></label>
+          </div>
+          <label className="hq-check"><input type="checkbox" checked={!!d.active} onChange={e=>setD(v=>({...v,active:e.target.checked}))}/> Active campaign</label>
+          <div className="hq-form-actions"><button className="hq-btn hq-btn--gold" disabled={!canEdit||!d.brand_name||!d.headline} onClick={save}>Save promotion</button>{d.id&&<button className="hq-btn" onClick={()=>setD(empty)}>New campaign</button>}</div>
+        </div>
+        <p className="hq-help">Short feeds show one sponsored card after the first organic post. Larger feeds use a low-frequency placement after roughly every seven organic posts, capped at two sponsored cards per feed window. Campaign age, start and end settings still apply.</p>
+      </article>
+      <article className="hq-card">
+        <div className="hq-card-title"><div><span>LIVE INVENTORY</span><h3>{rows.filter(r=>campaignState(r)==='LIVE').length} live campaigns</h3></div><Radio size={18}/></div>
+        <div className="hq-promo-list">{rows.length?rows.map(r=>{
+          const state=campaignState(r)
+          return <button key={r.id} className={`hq-promo-row ${state==='LIVE'?'':'is-off'}`} onClick={()=>edit(r)}>
+            <div>{r.image_url?<img src={r.image_url} alt=""/>:<span><BadgeDollarSign size={16}/></span>}</div>
+            <section><strong>{r.brand_name}</strong><b>{r.headline}</b><small>{Number(r.impressions||0).toLocaleString()} impressions · {Number(r.clicks||0).toLocaleString()} clicks · {r.min_age||18}+</small></section>
+            <em>{state}</em>
+          </button>
+        }):<div className="hq-empty"><BadgeDollarSign size={28}/><h3>No campaigns yet</h3><p>Add a paid placement from an image URL and destination link.</p></div>}</div>
+      </article>
+    </div>
+  </div>
 }
 
 function ContentPanel({ announcements, questions, platformPosts, canEdit, superAdmin, onRefresh, notify }) {

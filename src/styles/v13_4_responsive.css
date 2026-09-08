@@ -74,6 +74,132 @@ html {
   scroll-margin-bottom: 12px;
 }
 
+/* V13.11 — Moment thread alignment from 280px mobile through desktop. */
+.moment-thread-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.moment-thread-card,
+.moment-thread-card__content,
+.moment-thread-author,
+.moment-thread-author > *,
+.comment-row__copy {
+  min-width: 0;
+}
+
+.moment-thread-author {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.moment-thread-author .feed-card__author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.moment-thread-author .feed-card__identity {
+  min-width: 0;
+}
+
+.moment-thread-author .identity-line,
+.comment-row__identity {
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.moment-thread-author .identity-line strong,
+.moment-thread-author .feed-card__handle {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moment-thread-author > .aura-pill {
+  justify-self: end;
+  flex: 0 0 auto;
+}
+
+.moment-thread-card__content p {
+  font-size: clamp(18px, 5.2vw, 26px);
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.thread-actions > button,
+.thread-actions > span {
+  min-width: 0;
+  padding-inline: 7px;
+  overflow: hidden;
+}
+
+.thread-actions b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: inherit;
+}
+
+.comment-row {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.comment-row__identity strong,
+.comment-row__handle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-row__identity strong {
+  flex: 0 1 auto;
+}
+
+.comment-row__handle {
+  color: var(--muted);
+  flex: 1 1 auto;
+}
+
+.comment-composer {
+  width: 100%;
+  min-height: 58px;
+  z-index: 8;
+}
+
+.hq-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.hq-alert > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.hq-alert strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
 /* V13.10 — Gen-Z profile depth, driven by pointer and scroll variables. */
 .profile-page--motion {
   --profile-scroll: 0;
@@ -662,6 +788,85 @@ html {
     padding-bottom: 104px !important;
   }
 
+  .moment-thread-page {
+    min-height: calc(100dvh - 104px);
+    display: flex;
+    flex-direction: column;
+    padding-inline: clamp(10px, 4vw, 18px) !important;
+    padding-bottom: 0 !important;
+  }
+
+  .moment-thread-page__head {
+    flex: 0 0 auto;
+    margin-bottom: 14px !important;
+  }
+
+  .moment-thread-card {
+    width: 100%;
+    padding: 13px !important;
+    border-radius: 20px !important;
+  }
+
+  .moment-thread-card__content {
+    padding: 16px !important;
+    border-radius: 17px !important;
+  }
+
+  .moment-thread-card__content p {
+    margin-block: 12px;
+  }
+
+  .thread-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .thread-actions > button,
+  .thread-actions > span {
+    min-height: 42px !important;
+    padding-inline: 4px !important;
+    font-size: 8px !important;
+  }
+
+  .thread-actions svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .comment-list {
+    width: 100%;
+    margin-block: 12px !important;
+  }
+
+  .comment-row {
+    padding: 11px !important;
+  }
+
+  .comment-composer {
+    position: sticky !important;
+    bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    grid-template-columns: minmax(0, 1fr) 42px !important;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: 7px !important;
+    border-radius: 17px !important;
+    box-shadow: 0 12px 32px rgba(20, 24, 40, .14);
+    transition: bottom 220ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .app-frame:has(.bottom-nav.is-hidden) .moment-thread-page .comment-composer {
+    bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .comment-composer input {
+    min-height: 42px;
+    font-size: 16px;
+  }
+
+  .comment-composer button {
+    min-height: 42px;
+  }
+
   .bottom-nav {
     left: 50% !important;
     right: auto !important;
@@ -815,6 +1020,19 @@ html {
 }
 
 @media (max-width: 460px) {
+  .moment-thread-author .feed-card__author .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .moment-thread-author > .aura-pill {
+    max-width: 70px;
+  }
+
+  .moment-thread-author .feed-card__handle {
+    font-size: 8px;
+  }
+
   .chat-detail-person .avatar,
   .chat-head-actions .aura-pill {
     display: none !important;
@@ -841,6 +1059,48 @@ html {
 }
 
 @media (max-width: 340px) {
+  .moment-thread-page {
+    padding-inline: 8px !important;
+  }
+
+  .moment-thread-card {
+    padding: 10px !important;
+  }
+
+  .moment-thread-card__content {
+    padding: 14px !important;
+  }
+
+  .moment-thread-card__content p {
+    font-size: 17px;
+  }
+
+  .moment-thread-author {
+    gap: 6px !important;
+  }
+
+  .moment-thread-author > .aura-pill {
+    max-width: 58px;
+    padding-inline: 5px !important;
+  }
+
+  .thread-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .thread-actions > button,
+  .thread-actions > span {
+    font-size: 9px !important;
+  }
+
+  .comment-row__identity {
+    flex-wrap: wrap;
+  }
+
+  .comment-row__handle {
+    flex-basis: 100%;
+  }
+
   .chat-privacy-bar small {
     max-width: 150px;
   }

@@ -1,18 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VYBE",
+  "productName": "CodaVybes",
   "version": "1.0.0",
   "identifier": "app.vybe.desktop",
   "build": {
-    "beforeDevCommand": "cd ../../.. && npm run dev -- --host 127.0.0.1",
+    "beforeDevCommand": "cd ../.. && npm run dev -- --host 127.0.0.1",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "cd ../../.. && npm run build",
+    "beforeBuildCommand": "cd ../.. && npm run build",
     "frontendDist": "../../../dist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
-        "title": "VYBE",
+        "title": "CodaVybes",
         "width": 1280,
         "height": 820,
         "minWidth": 900,
@@ -29,5 +30,12 @@
   "bundle": {
     "active": true,
     "targets": "all"
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["app.vybe.desktop"]
+      }
+    }
   }
 }

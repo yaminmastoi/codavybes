@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { authRedirectUrl, nativeAuthPlatform, openOAuthUrl } from './authRedirectService'
 
 function requireSupabase() {
   if (!isSupabaseConfigured || !supabase) {
@@ -9,7 +10,7 @@ function requireSupabase() {
 
 export async function signUpWithEmail({ email, password }) {
   const client = requireSupabase()
-  const redirectTo = `${window.location.origin}/onboarding`
+  const redirectTo = authRedirectUrl('callback')
   const { data, error } = await client.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
@@ -31,11 +32,16 @@ export async function signInWithEmail({ email, password }) {
 
 export async function signInWithGoogle() {
   const client = requireSupabase()
+  const native = nativeAuthPlatform()
   const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${window.location.origin}/onboarding` },
+    options: {
+      redirectTo: authRedirectUrl('callback'),
+      skipBrowserRedirect: Boolean(native),
+    },
   })
   if (error) throw error
+  if (native) await openOAuthUrl(data.url)
   return data
 }
 
@@ -44,7 +50,7 @@ export async function resendSignupConfirmation(email) {
   const { data, error } = await client.auth.resend({
     type: 'signup',
     email: email.trim().toLowerCase(),
-    options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+    options: { emailRedirectTo: authRedirectUrl('callback') },
   })
   if (error) throw error
   return data
@@ -54,7 +60,7 @@ export async function resendSignupConfirmation(email) {
 export async function sendPasswordReset(email) {
   const client = requireSupabase()
   const { data, error } = await client.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: authRedirectUrl('reset-password'),
   })
   if (error) throw error
   return data

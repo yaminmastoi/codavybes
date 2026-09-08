@@ -1,4 +1,4 @@
-# VYBE platform shells
+# CodaVybes platform shells
 
 The root Vite application is the shared product. Do not fork backend logic between clients.
 
@@ -27,4 +27,4 @@ Tauri embeds the same root `dist/` in a lightweight desktop application.
 
 ## Important auth note
 
-Email/password works naturally inside all clients. Google/social OAuth should use system-browser + deep-link/callback handling before App Store / Play Store / desktop production distribution. Do not ship embedded-webview OAuth as the final auth implementation.
+Authentication sessions use persistent PKCE storage in every client. Google OAuth opens the system browser on Android and Windows, then returns to the originating client through its registered deep link. See `../V13_9_SETUP.md` for the required Supabase redirect allow list.

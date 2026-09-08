@@ -143,6 +143,27 @@ See `V13_7_SETUP.md` for deployment order.
 - The primary bottom navigation is not rendered inside an open conversation and returns after leaving the chat.
 - Mobile chat now owns the full dynamic viewport, with its compact composer locked to the bottom safe area.
 - Site-wide vertical scrollbars use a small themed thumb and horizontal scrollbar rails are hidden.
+- Windows Tauri builds use the corrected `../..` root command path from `platforms/desktop-tauri`.
 - No database migration is required.
 
 See `V13_8_SETUP.md` for deployment notes.
+
+## V13.9 persistent cross-platform authentication
+
+- Supabase sessions now use explicit persistent storage, PKCE and automatic token refresh across web, Capacitor and Tauri.
+- Google OAuth opens in the system browser on Android and Windows and returns to the same client through registered deep links.
+- Web OAuth finishes on `/auth/callback`; password reset uses the matching callback flow.
+- The Windows shell includes deep-link, opener and single-instance support.
+- No database migration is required; Supabase redirect allow-list configuration is required.
+
+See `V13_9_SETUP.md` before deploying or rebuilding native clients.
+
+## V13.10 chat recency, profile motion and product naming
+
+- Chat messages use deterministic chronological ordering and reliably settle on the newest message after the opening loader.
+- Message rows keep compact natural spacing instead of stretching across the conversation viewport.
+- Profile identity includes subtle pointer tilt, scroll depth, orbit elements, floating social chips and scroll-reveal cards.
+- Android and Windows display names, window titles and shell metadata now use CodaVybes rather than VYBE.
+- No database migration is required.
+
+See `V13_10_SETUP.md` for rebuild notes.

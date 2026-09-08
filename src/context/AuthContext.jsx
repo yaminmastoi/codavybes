@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { getOnboardingState } from '../services/onboardingService'
+import { initializeAuthPlatformBridge } from '../services/authRedirectService'
 
 const AuthContext = createContext(null)
 
@@ -16,6 +17,16 @@ export function AuthProvider({ children }) {
     if (!isSupabaseConfigured) return undefined
     const timer = window.setTimeout(() => setIntroReady(true), 1450)
     return () => window.clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined
+    let cleanup = () => {}
+    let mounted = true
+    initializeAuthPlatformBridge()
+      .then((dispose) => { if (mounted) cleanup = dispose; else dispose() })
+      .catch((error) => console.error('Unable to initialize native auth:', error))
+    return () => { mounted = false; cleanup() }
   }, [])
 
   const refreshOnboarding = useCallback(async () => {

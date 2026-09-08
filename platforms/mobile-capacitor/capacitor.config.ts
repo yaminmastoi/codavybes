@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'app.vybe.social',
-  appName: 'VYBE',
+  appName: 'CodaVybes',
   webDir: '../../dist',
   server: {
     androidScheme: 'https',

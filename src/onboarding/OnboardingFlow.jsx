@@ -108,7 +108,7 @@ export default function OnboardingFlow() {
         <Logo className="onboarding-brand-logo"/>
         <div className="onboarding-brand-copy">
           <p className="eyebrow">SOCIAL, REBUILT</p>
-          <h1>Real people.<br/><span>Better CodaVybess.</span></h1>
+          <h1>Real people.<br/><span>Better CodaVybes.</span></h1>
           <p>Meet, talk, play and build a reputation that follows you across every screen.</p>
         </div>
         <div className="onboarding-brand-features">
@@ -153,6 +153,17 @@ export default function OnboardingFlow() {
 function Welcome({ onGoogle, onEmail, onLogin }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const completed = () => setBusy(false)
+    const failed = (event) => { setBusy(false); setError(event.detail || 'Google sign in could not finish.') }
+    window.addEventListener('codavybes:auth-complete', completed)
+    window.addEventListener('codavybes:auth-error', failed)
+    return () => {
+      window.removeEventListener('codavybes:auth-complete', completed)
+      window.removeEventListener('codavybes:auth-error', failed)
+    }
+  }, [])
 
   async function google() {
     try {

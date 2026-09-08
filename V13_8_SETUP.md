@@ -16,3 +16,4 @@ No new SQL migration is required for V13.8. Existing migration 018 must already 
 1. Install dependencies from a clean platform-local `node_modules` folder.
 2. Run `npm run build` and deploy the web build.
 3. For Android, run the Capacitor sync flow and rebuild the APK.
+4. For Windows, run `npm install` and `npm run build` from `platforms/desktop-tauri`. The shell now resolves the root frontend with the corrected `../..` path.

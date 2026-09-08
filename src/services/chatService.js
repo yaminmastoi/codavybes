@@ -44,11 +44,16 @@ export async function getMessages(conversationId, limit = 60, before = null) {
   if (messagesResult.error) throw messagesResult.error
   if (receiptsResult.error) throw receiptsResult.error
   const receipts = new Map((receiptsResult.data ?? []).map((row) => [row.message_id, row]))
-  const rows = (messagesResult.data ?? []).reverse().map((row) => ({
+  const rows = [...(messagesResult.data ?? [])]
+    .sort((left, right) => {
+      const time = new Date(left.created_at).getTime() - new Date(right.created_at).getTime()
+      return time || String(left.message_id).localeCompare(String(right.message_id))
+    })
+    .map((row) => ({
     ...row,
     delivered_at: receipts.get(row.message_id)?.delivered_at ?? null,
     viewed_at: receipts.get(row.message_id)?.viewed_at ?? null,
-  }))
+    }))
   return enrichVerified(rows, 'sender_id', 'sender_verified')
 }
 

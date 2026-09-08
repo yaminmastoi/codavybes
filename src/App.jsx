@@ -23,12 +23,15 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import LegalPage from './pages/LegalPage'
 import ConsentBanner from './components/ConsentBanner'
+import AuthCallback from './pages/AuthCallback'
 
 export default function App() {
   return (<>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/reset-password" element={<AuthCallback />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/privacy" element={<LegalPage type="privacy" />} />

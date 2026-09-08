@@ -1,6 +1,6 @@
-# VYBE Mobile — Capacitor shell
+# CodaVybes Mobile — Capacitor shell
 
-This package turns the root responsive VYBE build into Android/iOS native shells.
+This package turns the root responsive CodaVybes build into Android/iOS native shells.
 
 ## Requirements
 
@@ -55,14 +55,27 @@ Then rebuild/reinstall the APK. On Android 13+, open CodaVybes Settings and tap 
 
 This native local channel fixes alerts received by the running app. Notifications while the app is fully terminated require Firebase Cloud Messaging plus a server-side push sender; do not place Firebase service-account secrets in the app.
 
+## Google OAuth return to the app
+
+The shared frontend uses `app.vybe.social://auth/callback`. Capacitor's generated
+Android project registers `@string/custom_url_scheme`; confirm its value is
+`app.vybe.social` in `android/app/src/main/res/values/strings.xml` after sync.
+
+Add these URLs to Supabase Dashboard → Authentication → URL Configuration →
+Redirect URLs:
+
+- `app.vybe.social://auth/callback`
+- `app.vybe.social://auth/reset-password`
+
+Then run `npm install`, `npm run sync`, and rebuild/reinstall the APK.
+
 ## Production checklist
 
 Before store submission add native implementations for:
 
-- System-browser Google OAuth + app deep links
 - Remote push delivery while the app is fully terminated (APNs/FCM)
 - Camera/gallery permissions for profile/media uploads
 - Haptics for Aura and game feedback
-- Universal/App Links for VYBE URLs
+- Universal/App Links for CodaVybes URLs
 
 Never place the Supabase service-role/secret key in Capacitor config or bundled JavaScript.

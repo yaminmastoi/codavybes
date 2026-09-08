@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronDown, Crown, Flame, Gamepad2, Link2, LogOut, Settings, Trophy, Users, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Avatar from '../components/Avatar'
 import AuraRankCard from '../components/AuraRankCard'
-import AuraBoard from '../components/AuraBoard'
-import AuraHistory from '../components/AuraHistory'
 import WalletMiniCard from '../components/WalletMiniCard'
 import { PageSkeleton } from '../components/Loaders'
 import InterestIcon from '../components/InterestIcon'
@@ -13,7 +11,7 @@ import PlusBadge from '../components/PlusBadge'
 import { useAuth } from '../context/AuthContext'
 import { useCommerce } from '../context/CommerceContext'
 import { signOut } from '../services/authService'
-import { getAuraDashboard, getAuraLedger, getMyMoments } from '../services/auraService'
+import { getAuraDashboard, getMyThreads } from '../services/auraService'
 import { getMyGameStats } from '../services/roomService'
 import { getMyConnections } from '../services/socialService'
 import { adminService } from '../services/adminService'
@@ -24,15 +22,13 @@ function niceSlug(slug) { return slug.replace(/_/g, ' ').replace(/\b\w/g, (c) =>
 export default function Profile() {
   const { onboarding } = useAuth()
   const { summary: commerceSummary } = useCommerce()
-  const heroRef = useRef(null)
   const [compactIdentity, setCompactIdentity] = useState(false)
   const [dashboard, setDashboard] = useState(null)
-  const [moments, setMoments] = useState([])
-  const [ledger, setLedger] = useState([])
+  const [threads, setThreads] = useState([])
   const [gameStats, setGameStats] = useState({ vibe_level: 1, room_wins: 0, games_played: 0, verified_game_aura: 0 })
   const [connections, setConnections] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
-  const [tab,setTab]=useState('moments')
+  const [tab,setTab]=useState('threads')
   const [loading,setLoading]=useState(true)
   const name = onboarding?.display_name || onboarding?.username || 'CodaVybes User'
   const username = onboarding?.username || 'new_vibe'
@@ -41,21 +37,29 @@ export default function Profile() {
 
   useEffect(() => {
     adminService.session().then(() => setIsAdmin(true)).catch(() => setIsAdmin(false))
-    Promise.all([getAuraDashboard(), getMyMoments(12), getAuraLedger(20), getMyGameStats(), getMyConnections(20)])
-      .then(([dash, ownMoments, auraLedger, stats, bonds]) => { setDashboard(dash); setMoments(ownMoments); setLedger(auraLedger); setGameStats(stats); setConnections(bonds) })
+    Promise.all([getAuraDashboard(), getMyThreads(20), getMyGameStats(), getMyConnections(20)])
+      .then(([dash, ownThreads, stats, bonds]) => { setDashboard(dash); setThreads(ownThreads); setGameStats(stats); setConnections(bonds) })
       .catch((error) => console.error('Profile:', error)).finally(()=>setLoading(false))
   }, [])
 
 
   useEffect(() => {
-    const hero = heroRef.current
-    if (!hero || typeof IntersectionObserver === 'undefined') return undefined
-    const observer = new IntersectionObserver(([entry]) => {
-      const above = entry.boundingClientRect.top < 0
-      setCompactIdentity(above && entry.intersectionRatio < 0.2)
-    }, { threshold: [0, 0.2, 0.55, 1] })
-    observer.observe(hero)
-    return () => observer.disconnect()
+    const handleScroll = (event) => {
+      const target = event?.target
+      const documentScroll = target === document || target === window || target === document.documentElement || target === document.body
+      if (target && !documentScroll && !target.classList?.contains('app-main')) return
+      const top = documentScroll
+        ? (window.scrollY || document.documentElement.scrollTop || 0)
+        : (Number(target?.scrollTop) || window.scrollY || 0)
+      setCompactIdentity(top > 86)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true })
+    handleScroll({ target: document.querySelector('.app-main') || document })
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      document.removeEventListener('scroll', handleScroll, true)
+    }
   }, [])
 
   const aura = dashboard?.aura_total ?? onboarding?.aura_total ?? 1
@@ -69,7 +73,7 @@ export default function Profile() {
         <b className="profile-sticky-score"><Zap size={14} fill="currentColor"/>+{Number(aura).toLocaleString()}</b>
       </div>
     </div>
-    <section ref={heroRef} className="profile-identity-hero" aria-label="Profile identity">
+    <section className="profile-identity-hero" aria-label="Profile identity">
       <Link className="icon-btn profile-settings profile-settings--hero" to="/settings" aria-label="Settings"><Settings size={20}/></Link>
       <div className="profile-avatar-stage"><Avatar src={onboarding?.avatar_url} alt={name} initials={initials(name)} size="xl" online/></div>
       <div className="profile-name-line profile-name-line--hero"><h1 title={name}>{name}</h1><span className="identity-badges identity-badges--hero"><VerifiedBadge verified={onboarding?.is_verified} size={22}/><PlusBadge active={plusActive} size={21}/></span></div>
@@ -92,12 +96,9 @@ export default function Profile() {
       <div className="profile-stats surface"><div><strong>{gameStats.vibe_level ?? 1}</strong><span>Vibe Level</span></div><div><strong>{connections.length}</strong><span>Bonds</span></div><div><strong>{gameStats.room_wins ?? 0}</strong><span>Room Wins</span></div></div>
       <p className="profile-bio">{onboarding?.bio || 'Your CodaVybes story starts here.'}</p>
 
-      <div className="profile-tabs">{[['moments','Moments'],['rooms','Rooms'],['bonds','Bonds'],['about','About']].map(([key,label])=><button key={key} className={tab===key?'is-active':''} onClick={()=>setTab(key)}>{label}</button>)}</div>
+      <div className="profile-tabs">{[['threads','Threads'],['rooms','Rooms'],['bonds','Bonds'],['about','About']].map(([key,label])=><button key={key} className={tab===key?'is-active':''} onClick={()=>setTab(key)}>{label}</button>)}</div>
 
-      {tab==='moments' && <>
-        <section className="my-moments">{moments.length ? moments.map((moment) => <Link className="surface profile-moment profile-moment--link" to={`/moments/${moment.target_id}`} key={moment.target_id}><p className="eyebrow"><Zap size={13}/> {moment.is_aura_moment ? 'AURA MOMENT' : 'CodaVybes MOMENT'}</p><h3>{moment.content_text}</h3><div className="row between"><span className="muted"><><Flame size={13}/> For You eligible</></span><strong className="brand-accent-text"><Zap size={13}/> +{moment.aura_count}</strong></div></Link>) : <article className="surface profile-moment empty-moment"><p className="eyebrow">FIRST MOMENT</p><h3>Your Room wins and Aura Moments will appear here.</h3><div className="row between"><span className="muted">Nothing to fake. Earn it.</span><strong className="brand-accent-text"><Zap size={13}/> +{aura}</strong></div></article>}</section>
-        <AuraHistory rows={ledger}/><AuraBoard/>
-      </>}
+      {tab==='threads' && <section className="my-moments profile-threads">{threads.length ? threads.map((thread) => <Link className="surface profile-moment profile-moment--link" to={`/moments/${thread.target_id}`} key={thread.target_id}><p className="eyebrow"><Flame size={13}/> RISING LAB THREAD</p><h3>{thread.content_text}</h3><div className="row between"><span className="muted">Published {new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(new Date(thread.created_at))}</span><strong className="brand-accent-text"><Zap size={13}/> +{thread.aura_count}</strong></div></Link>) : <article className="surface profile-moment empty-moment"><p className="eyebrow">NO THREADS YET</p><h3>Thoughts uploaded from Rising Lab will appear here.</h3><div className="row between"><Link className="text-btn" to="/home">Open Rising Lab</Link><strong className="brand-accent-text"><Zap size={13}/> +{aura}</strong></div></article>}</section>}
 
       {tab==='rooms' && <section className="profile-tab-panel"><article className="surface profile-room-summary"><Trophy size={24}/><div><p className="eyebrow">ROOM RECORD</p><h2>{gameStats.room_wins ?? 0} wins</h2><span>{gameStats.games_played ?? 0} games played · +{gameStats.verified_game_aura ?? 0} verified game Aura</span></div></article><Link className="btn btn--primary" to="/rooms"><Gamepad2 size={18}/> Enter Rooms</Link></section>}
 

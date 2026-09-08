@@ -128,3 +128,21 @@ See `V13_5_SETUP.md` for deployment details.
 - No database migration is required.
 
 See `V13_6_SETUP.md` before rebuilding the APK.
+
+## V13.7 brand loader and profile Threads
+
+- App and chat opening use a shared 1.45-second CodaVybes logo-to-name animation.
+- Profile identity compacts into a persistent sticky bar during scroll and expands again at the top.
+- The profile Moments tab is replaced by Threads containing only the user's public Rising Lab posts.
+- Run `supabase/migrations/018_profile_rising_threads.sql` after migration 017.
+
+See `V13_7_SETUP.md` for deployment order.
+
+## V13.8 distraction-free mobile chat
+
+- The primary bottom navigation is not rendered inside an open conversation and returns after leaving the chat.
+- Mobile chat now owns the full dynamic viewport, with its compact composer locked to the bottom safe area.
+- Site-wide vertical scrollbars use a small themed thumb and horizontal scrollbar rails are hidden.
+- No database migration is required.
+
+See `V13_8_SETUP.md` for deployment notes.

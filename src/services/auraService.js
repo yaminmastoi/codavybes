@@ -60,7 +60,7 @@ export async function createMoment(text, contextLabel = 'CodaVybes') {
   return data
 }
 
-export async function getMyMoments(limit = 20) {
+export async function getMyThreads(limit = 20) {
   requireSupabase()
   const { data, error } = await supabase.rpc('get_my_moments', { p_limit: limit })
   if (error) throw error

@@ -19,7 +19,7 @@ function AppChrome() {
       <main className={`app-main ${chatRoute ? 'app-main--chat' : ''}`}><Outlet /></main>
       <DesktopRail />
     </div>
-    <BottomNav />
+    {!chatRoute && <BottomNav />}
   </div>
 }
 

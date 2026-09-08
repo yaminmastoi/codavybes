@@ -1,7 +1,13 @@
 import Logo from './Logo'
 
 export function AppLaunchLoader({ label = 'Opening CodaVybes' }) {
-  return <div className="app-launch-loader" role="status" aria-live="polite"><div className="launch-logo-wrap"><Logo markOnly/></div><div className="launch-progress"><span/></div><p>{label}</p></div>
+  return <div className="app-launch-loader" role="status" aria-live="polite">
+    <div className="launch-brand-sequence" aria-hidden="true">
+      <div className="launch-logo-wrap"><Logo markOnly/></div>
+      <div className="launch-name-lockup"><strong>CodaVybes</strong><small>powered by CodaBite</small></div>
+    </div>
+    <span className="launch-status-copy">{label}</span>
+  </div>
 }
 
 export function PageSkeleton({ variant = 'feed', count = 3 }) {

@@ -10,6 +10,13 @@ export function AuthProvider({ children }) {
   const [onboarding, setOnboarding] = useState(null)
   const [onboardingLoading, setOnboardingLoading] = useState(false)
   const [loading, setLoading] = useState(isSupabaseConfigured)
+  const [introReady, setIntroReady] = useState(!isSupabaseConfigured)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined
+    const timer = window.setTimeout(() => setIntroReady(true), 1450)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const refreshOnboarding = useCallback(async () => {
     if (!supabase) {
@@ -76,10 +83,10 @@ export function AuthProvider({ children }) {
     user,
     onboarding,
     onboardingLoading,
-    loading,
+    loading: loading || !introReady,
     configured: isSupabaseConfigured,
     refreshOnboarding,
-  }), [session, user, onboarding, onboardingLoading, loading, refreshOnboarding])
+  }), [session, user, onboarding, onboardingLoading, loading, introReady, refreshOnboarding])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

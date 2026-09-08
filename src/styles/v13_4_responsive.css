@@ -1,6 +1,176 @@
 /* CodaVybes V13.4 — deterministic sidebar and chat responsiveness.
    Loaded last so older responsive layers cannot re-introduce overflow. */
 
+/* V13.8 — compact, consistent site scrollbar without horizontal rails. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 58%, var(--muted)) transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 58%, var(--muted)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 0;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 58%, var(--muted));
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* V13.7 brand intro — one 1.45s sequence shared by app and chat opening. */
+.app-launch-loader {
+  position: relative;
+  min-height: 100dvh !important;
+  overflow: hidden;
+  gap: 0 !important;
+  background:
+    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28%),
+    var(--bg) !important;
+}
+
+.app-launch-loader::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(420px, 84vw);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 52%, transparent), transparent);
+  opacity: 0;
+  transform: translate(-50%, 46px) scaleX(.15);
+  animation: codaLoaderBeam 1.45s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.launch-brand-sequence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  max-width: calc(100vw - 32px);
+  animation: codaLoaderSettle 1.45s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.app-launch-loader .launch-logo-wrap {
+  width: 68px !important;
+  height: 68px !important;
+  flex: 0 0 68px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: codaLoaderMark 1.45s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.app-launch-loader .launch-logo-wrap .brand-symbol {
+  width: 68px !important;
+  height: 68px !important;
+  filter: drop-shadow(0 10px 22px color-mix(in srgb, var(--accent) 20%, transparent));
+}
+
+.app-launch-loader .launch-logo-wrap .brand-symbol path:first-of-type {
+  stroke-dasharray: 116;
+  stroke-dashoffset: 0;
+  animation: codaLoaderDraw 1.05s cubic-bezier(.65, 0, .35, 1) both;
+}
+
+.launch-name-lockup {
+  min-width: 0;
+  max-width: 250px;
+  overflow: hidden;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 1;
+  animation: codaLoaderName 1.45s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.launch-name-lockup strong,
+.launch-name-lockup small {
+  display: block;
+}
+
+.launch-name-lockup strong {
+  color: var(--text);
+  font-size: clamp(25px, 6vw, 36px);
+  line-height: 1;
+  font-weight: 830;
+  letter-spacing: -.055em;
+}
+
+.launch-name-lockup small {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 760;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.launch-status-copy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes codaLoaderMark {
+  0% { opacity: 0; transform: scale(.72); filter: blur(7px); }
+  18% { opacity: 1; transform: scale(1.08); filter: blur(0); }
+  38% { transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes codaLoaderDraw {
+  0% { stroke-dashoffset: 116; opacity: .25; }
+  62%, 100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes codaLoaderName {
+  0%, 34% { max-width: 0; opacity: 0; transform: translateX(-12px); }
+  68%, 100% { max-width: 250px; opacity: 1; transform: translateX(0); }
+}
+
+@keyframes codaLoaderSettle {
+  0%, 78% { transform: scale(1); }
+  100% { transform: scale(.98); }
+}
+
+@keyframes codaLoaderBeam {
+  0%, 36% { opacity: 0; transform: translate(-50%, 46px) scaleX(.15); }
+  62% { opacity: .75; }
+  100% { opacity: 0; transform: translate(-50%, 46px) scaleX(1); }
+}
+
+.profile-sticky-anchor {
+  transition: visibility 160ms ease;
+}
+
+.profile-sticky-anchor.is-visible .profile-sticky-identity {
+  box-shadow: 0 12px 30px rgba(21, 26, 43, .12) !important;
+}
+
+.profile-threads .profile-moment {
+  border-left: 3px solid var(--accent) !important;
+}
+
 .app-frame,
 .app-workspace,
 .app-main,
@@ -313,7 +483,7 @@
   }
 }
 
-/* Mobile chat: respect bottom navigation and virtual-keyboard viewport. */
+/* Mobile navigation stays outside a conversation; chat owns the full viewport. */
 @media (max-width: 767px) {
   .app-main {
     padding-bottom: 104px !important;
@@ -420,7 +590,8 @@
   }
 
   .app-main--chat {
-    height: calc(100dvh - 76px) !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
     min-height: 0 !important;
     padding-bottom: 0 !important;
     overflow: hidden !important;
@@ -451,7 +622,18 @@
 
   .message-composer--modern {
     width: calc(100% - 12px) !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
     margin: 4px auto max(5px, env(safe-area-inset-bottom)) !important;
+    flex: 0 0 52px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  *::-webkit-scrollbar {
+    width: 3px;
+    height: 0;
   }
 }
 
@@ -501,5 +683,13 @@
   .bottom-nav__item::before {
     transition: none;
     animation: none;
+  }
+
+  .app-launch-loader::after,
+  .launch-brand-sequence,
+  .app-launch-loader .launch-logo-wrap,
+  .app-launch-loader .launch-logo-wrap .brand-symbol path:first-of-type,
+  .launch-name-lockup {
+    animation: none !important;
   }
 }

@@ -1,4 +1,4 @@
-# VYBE Supabase Setup
+# CodaVybes Supabase Setup
 
 ## 1. Create a Supabase project
 
@@ -7,6 +7,7 @@ Copy only browser-safe values into `.env.local`:
 ```env
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+VITE_GA_MEASUREMENT_ID=
 ```
 
 Never put a secret/service-role key in a `VITE_*` variable.
@@ -17,8 +18,10 @@ In **Supabase Dashboard → SQL Editor** run:
 
 1. `supabase/migrations/001_auth_onboarding.sql`
 2. `supabase/migrations/002_aura_engine.sql`
+...
+20. `supabase/migrations/020_codavybes_analytics_restore.sql`
 
-Phase 1 creates auth-linked profile/onboarding data and constrained identity RPCs. Phase 2 creates Aura economy/ranks/Rising/FYP/ledger functions.
+Run every migration in order for a fresh production database. Phase 20 restores first-party HQ analytics and can be added to an existing V13.13 database after migration 019.
 
 ## 3. Authentication settings
 
@@ -69,3 +72,19 @@ V6 eligibility is minimum-age based. `005_social_loop_bonds_age10.sql` sets the 
 - `get_aura_board`
 
 `award_verified_aura` and `admin_adjust_aura` are **service-role-only** and must never be invoked from browser code.
+
+## 7. HQ analytics
+
+Run `020_codavybes_analytics_restore.sql`, then deploy the optional Edge Function if you want IP/location capture:
+
+```bash
+supabase functions deploy track-analytics
+supabase secrets set PRIVATE_SB_SECRET_KEY=YOUR_SERVICE_ROLE_KEY
+```
+
+Use `PRIVATE_SB_SECRET_KEY` when adding the service-role key through Supabase
+Function Secrets. The dashboard may reject new custom names that start with
+`SUPABASE_`; the functions still read Supabase's built-in values automatically
+when they exist.
+
+Without the Edge Function, the app still records consented page/event counts through a browser-safe RPC, but server-derived IP/location fields remain empty.

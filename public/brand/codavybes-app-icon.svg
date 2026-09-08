@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">CodaVybes app icon</title>
+  <desc id="desc">Rounded fox icon for CodaVybes.</desc>
+  <defs>
+    <clipPath id="tile">
+      <rect width="512" height="512" rx="124"/>
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" rx="124" fill="#07151B"/>
+  <image href="/brand/codavybes-mark.png" width="512" height="512" preserveAspectRatio="xMidYMid slice" clip-path="url(#tile)"/>
+</svg>

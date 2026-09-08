@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "scripts": {
     "web:build": "cd ../.. && npm run build",
+    "assets": "capacitor-assets generate --assetPath assets",
     "sync": "npm run web:build && cap sync",
+    "sync:android": "npm run web:build && npm run assets && cap sync android",
     "add:android": "cap add android",
     "add:ios": "cap add ios",
     "android": "npm run sync && cap open android",
@@ -22,6 +24,7 @@
     "@capacitor/status-bar": "latest"
   },
   "devDependencies": {
+    "@capacitor/assets": "latest",
     "@capacitor/cli": "latest",
     "typescript": "latest"
   }

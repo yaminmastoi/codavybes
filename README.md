@@ -1,5 +1,17 @@
 # CodaVybes V13
 
+## V13.15 — fox brand + Linux desktop build
+
+V13.15 integrates the final rounded fox logo across the React brand component, app intro loader, PWA metadata, favicons, OG preview, Android asset source, Windows icons and Linux desktop bundle icons. The ear `< >` symbols were removed from the source logo. Desktop now includes separate Windows and Linux Tauri build scripts; Linux builds produce `deb`, `rpm` and `AppImage` artifacts on an Ubuntu runner.
+
+Run `npm run verify:launch` before release. See `V13_15_FOX_BRAND_LINUX.md`.
+
+## V13.14 — HQ analytics restore
+
+V13.14 adds a first-party analytics system back into CodaVybes HQ: active users, active sessions, platform/device mix, location/IP metadata, top pages, recent sessions and privacy-safe retention cleanup. It also wires optional Google Analytics 4 through `VITE_GA_MEASUREMENT_ID`.
+
+Run `supabase/migrations/020_codavybes_analytics_restore.sql` after migration 019 and deploy `supabase/functions/track-analytics` if you want IP/location capture. Service-role access can use `PRIVATE_SB_SECRET_KEY` in Supabase Function Secrets. See `V13_14_ANALYTICS_SETUP.md`.
+
 ## V13.12 — For You inventory + promotions delivery
 
 V13.12 fixes promotions disappearing when the organic feed has fewer than six posts, automatically enables Feed ads when an active campaign is saved, exposes accurate campaign state in HQ, and reinstalls the all-public-post For You RPC. Run `supabase/migrations/019_fyp_promotions_delivery.sql` after migration 018. See `V13_12_SETUP.md`.
@@ -54,7 +66,7 @@ V9 is the visual/product-polish release of the existing V8.1 working platform.
 - Light theme is now the default.
 - Full premium dark theme.
 - Light / Dark / System selector in Settings.
-- New CodaVybes interlocking-ribbon logo and app mark.
+- Earlier CodaVybes ribbon branding is superseded by the V13.15 fox app mark.
 - Plus Jakarta Sans formal UI typography.
 - Unified Lucide vector icon system; decorative emoji UI removed.
 - App-launch loader, route loaders, content skeletons and action loaders.
@@ -177,3 +189,13 @@ See `V13_9_SETUP.md` before deploying or rebuilding native clients.
 - No database migration is required.
 
 See `V13_10_SETUP.md` for rebuild notes.
+
+## V13.13 production brand assets
+
+- The approved CodaVybes logo is integrated across the React logo component, splash loader, PWA manifest, favicon, Apple icon, notifications, OG/Twitter preview and Windows bundle assets.
+- Windows Tauri now has a valid `src-tauri/icons/icon.ico` plus explicit MSI/NSIS icon config, fixing the `Couldn't find a .ico icon` workflow failure.
+- Chat detail no longer shows the branded opening splash or waits on the old artificial loader delay.
+- Public launch basics are included: `robots.txt`, `sitemap.xml`, and a 1200x630 `og-image.png`.
+- No database migration is required.
+
+See `V13_13_BRAND_ASSETS.md` for asset paths and Supabase redirect allow-list notes.

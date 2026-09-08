@@ -35,7 +35,7 @@ async function ensureNativeChannel(plugin) {
     visibility: 1,
     vibration: true,
     lights: true,
-    lightColor: '#665CFF',
+    lightColor: '#FF7A1C',
   }).catch(() => null)
 }
 
@@ -52,7 +52,7 @@ export function systemNotificationsSupported() {
 
 export async function registerVybeServiceWorker() {
   if (nativePlatform() || !webNotificationsSupported()) return null
-  return navigator.serviceWorker.register('/vybe-sw.js')
+  return navigator.serviceWorker.register('/codavybes-sw.js')
 }
 
 export async function checkSystemNotificationPermission() {
@@ -109,8 +109,8 @@ export async function showSystemNotification(notification) {
   if (!registration) return false
   await registration.showNotification(notification.title || 'CodaVybes', {
     body: notification.body || '',
-    icon: '/vybe-mark.svg',
-    badge: '/vybe-mark.svg',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     tag: notification.id ? `vybe:${notification.id}` : undefined,
     data: { link: notification.link || '/notifications' },
   })

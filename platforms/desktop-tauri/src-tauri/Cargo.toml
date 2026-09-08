@@ -6,7 +6,7 @@ authors = ["CodaVybes"]
 edition = "2021"
 
 [lib]
-name = "vybe_lib"
+name = "codavybes_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

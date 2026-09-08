@@ -96,7 +96,7 @@ export default function Home() {
 
   return <div className="page home-v13">
     <header className="home-head home-head--v13">
-      <div className="row gap-12"><Avatar initials={initials(name)} online/><div className="home-welcome"><small className="muted">CodaVybes · powered by CodaBite</small><div className="identity-line"><h3>{name}</h3><VerifiedBadge verified={onboarding?.is_verified} size={15}/></div></div></div>
+      <div className="row gap-12"><Avatar initials={initials(name)} online/><div className="home-welcome"><small className="muted">CodaVybes · Connect. Discover. Chat.</small><div className="identity-line"><h3>{name}</h3><VerifiedBadge verified={onboarding?.is_verified} size={15}/></div></div></div>
       <div className="home-utility-row">
         <button className="top-utility-btn" onClick={()=>setAuraOpen(true)} aria-label="Open Aura rank"><Award size={18}/><span>{dashboard?.rank?.name || 'Aura'}</span></button>
         <button className="top-utility-btn top-utility-btn--icon" onClick={()=>navigate('/wallet')} aria-label="Open wallet"><WalletCards size={19}/></button>

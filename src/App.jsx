@@ -24,9 +24,11 @@ import ResetPassword from './pages/ResetPassword'
 import LegalPage from './pages/LegalPage'
 import ConsentBanner from './components/ConsentBanner'
 import AuthCallback from './pages/AuthCallback'
+import AnalyticsBridge from './components/AnalyticsBridge'
 
 export default function App() {
   return (<>
+    <AnalyticsBridge/>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />

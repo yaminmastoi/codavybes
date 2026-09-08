@@ -6,15 +6,28 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+function env(...names: string[]) {
+  for (const name of names) {
+    const value = Deno.env.get(name)
+    if (value) return value
+  }
+  return ''
+}
+
+function envMap(name: string) {
+  try { return JSON.parse(Deno.env.get(name) || '{}') }
+  catch { return {} }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  const url = Deno.env.get('SUPABASE_URL')
-  const publishableKeys = JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') || '{}')
-  const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}')
-  const anon = publishableKeys.default || Deno.env.get('SUPABASE_ANON_KEY')
-  const serviceRole = secretKeys.default || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const url = env('SUPABASE_URL', 'PRIVATE_SB_URL')
+  const publishableKeys = envMap('SUPABASE_PUBLISHABLE_KEYS')
+  const secretKeys = envMap('SUPABASE_SECRET_KEYS')
+  const anon = publishableKeys.default || env('SUPABASE_ANON_KEY', 'PRIVATE_SB_ANON_KEY')
+  const serviceRole = secretKeys.default || env('PRIVATE_SB_SECRET_KEY', 'SB_SERVICE_ROLE_KEY', 'SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY')
   const authorization = req.headers.get('Authorization')
   if (!url || !anon || !serviceRole || !authorization) return json({ error: 'Server configuration missing' }, 500)
 

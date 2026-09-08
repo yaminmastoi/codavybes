@@ -1,4 +1,4 @@
-# CodaVybes Brand Kit — V9
+# CodaVybes Brand Kit — V13.15
 
 ## Brand idea
 
@@ -14,13 +14,18 @@ Core voice:
 
 ## Logo
 
-The CodaVybes mark is an interlocking ribbon **V** made from two directional forms. It communicates connection, movement and two people meeting in the middle.
+The CodaVybes mark is a rounded fox app icon with a play-button eye. It communicates social energy, creator culture, chat, discovery and a premium app identity.
 
 Implementation:
 
 - React logo: `src/components/Logo.jsx`
-- App / notification mark: `public/vybe-mark.svg`
-- Visual reference: `brand-reference.png`
+- In-app rounded mark: `public/brand/codavybes-mark.png`
+- Clean edited source: `public/brand/codavybes-fox-clean.png`
+- SVG compatibility wrappers: `public/brand/codavybes-mark.svg`, `public/brand/codavybes-app-icon.svg`, `public/vybe-mark.svg`
+- PWA / browser icons: `public/icons/`
+- Desktop bundle icons: `platforms/desktop-tauri/src-tauri/icons/`
+- Android icon/splash source: `platforms/mobile-capacitor/assets/`
+- Visual reference: `public/brand/codavybes-logo-reference.png`
 
 Rules:
 
@@ -28,6 +33,7 @@ Rules:
 - Do not add stickers, crowns, flames or emojis to the core logo.
 - Use mark-only for loaders, app icon and compact navigation.
 - Use mark + CodaVybes wordmark for onboarding and HQ.
+- Do not place angle-bracket symbols, code marks or extra decorative glyphs inside the fox ears.
 
 ## Color system
 
@@ -40,8 +46,10 @@ Rules:
 - Primary text: `#151821`
 - Muted text: `#6F7888`
 - Border: `#E3E6EE`
-- CodaVybes Violet: `#7258F5`
-- CodaVybes Blue: `#3978F6`
+- Fox Orange: `#FF7A1C`
+- Deep Teal: `#0E5060`
+- Midnight Navy: `#07151B`
+- Warm Cream: `#FFF5DC`
 
 ### Dark
 
@@ -52,20 +60,26 @@ Rules:
 - Primary text: `#F4F6FA`
 - Muted text: `#9199A8`
 - Border: `#282D38`
-- CodaVybes Violet: `#8A73FF`
-- CodaVybes Blue: `#5A8CFF`
+- Fox Orange: `#FF8A2A`
+- Deep Teal: `#0E5060`
+- Midnight Navy: `#07151B`
+- Warm Cream: `#FFF5DC`
 
-Aura and interactive emphasis use the violet → blue family. Aura is never represented by purchasable gold/status styling.
+Brand emphasis uses the fox orange → deep teal family. Aura remains separate from purchasable/status styling.
 
 ## Typography
 
+Heading family:
+
+`Sora`
+
 Primary UI family:
 
-`Plus Jakarta Sans`
+`Inter`
 
 Fallback:
 
-`Avenir Next`, `Segoe UI`, system sans-serif.
+`Segoe UI`, system sans-serif.
 
 Guidelines:
 
@@ -96,7 +110,7 @@ Library: `lucide-react`
 
 CodaVybes has three loading levels:
 
-1. **App / protected-route loader** — animated CodaVybes mark and progress line.
+1. **App / protected-route loader** — mark-only fox intro with a short pop/pulse and fade-style transition.
 2. **Content fetch** — skeleton cards matching the final layout.
 3. **Action state** — compact inline spinner inside the affected button.
 

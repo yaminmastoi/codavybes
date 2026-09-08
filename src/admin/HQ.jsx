@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Activity, BadgeCheck, BadgeDollarSign, Ban, BellRing, ChevronRight, CircleDollarSign, Crown, Flag, Gamepad2,
-  Gauge, Image, LayoutDashboard, LockKeyhole, LogOut, Megaphone, MessageCircle, Pin, Radio, RefreshCw, Search,
-  Settings2, Shield, ShieldAlert, SlidersHorizontal, Sparkles, UserCog, Users, X, Zap,
+  Activity, BadgeCheck, BadgeDollarSign, Ban, BarChart3, BellRing, ChevronRight, CircleDollarSign, Clock3, Crown, Flag, Gamepad2,
+  Gauge, Globe2, Image, LayoutDashboard, LockKeyhole, LogOut, MapPin, Megaphone, MessageCircle, MonitorSmartphone, MousePointerClick, Pin, Radio, RefreshCw, Search,
+  Settings2, Shield, ShieldAlert, SlidersHorizontal, Sparkles, Trash2, UserCog, Users, X, Zap,
 } from 'lucide-react'
 import Logo from '../components/Logo'
 import { signOut } from '../services/authService'
@@ -14,6 +14,7 @@ import InterestIcon, { INTEREST_ICON_KEYS } from '../components/InterestIcon'
 
 const NAV = [
   ['overview', LayoutDashboard, 'Overview'],
+  ['analytics', BarChart3, 'Analytics'],
   ['users', Users, 'Users'],
   ['verification', BadgeCheck, 'Verification'],
   ['aura', Zap, 'Aura & FYP'],
@@ -85,11 +86,12 @@ function UserDrawer({ id, permissions, onClose, onChanged, notify }) {
 export default function HQ() {
   const [tab,setTab]=useState('overview'); const [session,setSession]=useState(null); const [dashboard,setDashboard]=useState(null); const [controls,setControls]=useState(null)
   const [users,setUsers]=useState([]); const [query,setQuery]=useState(''); const [userStatus,setUserStatus]=useState('all'); const [selectedUser,setSelectedUser]=useState(null)
-  const [reports,setReports]=useState([]); const [verificationRequests,setVerificationRequests]=useState([]); const [audit,setAudit]=useState([]); const [announcements,setAnnouncements]=useState([]); const [questions,setQuestions]=useState([]); const [admins,setAdmins]=useState([]); const [shopItems,setShopItems]=useState([]); const [topupPackages,setTopupPackages]=useState([]); const [promotions,setPromotions]=useState([]); const [platformPosts,setPlatformPosts]=useState([])
+  const [reports,setReports]=useState([]); const [verificationRequests,setVerificationRequests]=useState([]); const [analytics,setAnalytics]=useState(null); const [audit,setAudit]=useState([]); const [announcements,setAnnouncements]=useState([]); const [questions,setQuestions]=useState([]); const [admins,setAdmins]=useState([]); const [shopItems,setShopItems]=useState([]); const [topupPackages,setTopupPackages]=useState([]); const [promotions,setPromotions]=useState([]); const [platformPosts,setPlatformPosts]=useState([])
   const [busy,setBusy]=useState(false); const [toast,setToast]=useState({message:'',tone:'ok'})
   const notify=useCallback((message,tone='ok')=>setToast({message,tone}),[])
 
   const loadCore=useCallback(async()=>{ const [s,d,c]=await Promise.all([adminService.session(),adminService.dashboard(),adminService.controls()]); setSession(s);setDashboard(d);setControls(c) },[])
+  const loadAnalytics=useCallback(async()=>setAnalytics(await adminService.analytics()),[])
   const loadUsers=useCallback(async()=>setUsers(await adminService.users(query,userStatus,50,0)),[query,userStatus])
   const loadModeration=useCallback(async()=>setReports(await adminService.reports('open',80)),[])
   const loadVerification=useCallback(async()=>setVerificationRequests(await adminService.verificationRequests('pending',100)),[])
@@ -99,9 +101,9 @@ export default function HQ() {
   const loadSystem=useCallback(async()=>{const a=await adminService.audit(120);setAudit(a||[]); if(session?.can_manage_admins){try{setAdmins(await adminService.admins())}catch{setAdmins([])}}},[session?.can_manage_admins])
 
   useEffect(()=>{loadCore().catch(e=>notify(e.message,'error'))},[loadCore,notify])
-  useEffect(()=>{if(tab==='users')loadUsers().catch(e=>notify(e.message,'error'));if(tab==='verification')loadVerification().catch(e=>notify(e.message,'error'));if(tab==='moderation')loadModeration().catch(e=>notify(e.message,'error'));if(tab==='money')loadMoney().catch(e=>notify(e.message,'error'));if(tab==='promotions')loadPromotions().catch(e=>notify(e.message,'error'));if(tab==='content')loadContent().catch(e=>notify(e.message,'error'));if(tab==='system')loadSystem().catch(e=>notify(e.message,'error'))},[tab,loadUsers,loadVerification,loadModeration,loadMoney,loadPromotions,loadContent,loadSystem,notify])
+  useEffect(()=>{if(tab==='analytics')loadAnalytics().catch(e=>notify(e.message,'error'));if(tab==='users')loadUsers().catch(e=>notify(e.message,'error'));if(tab==='verification')loadVerification().catch(e=>notify(e.message,'error'));if(tab==='moderation')loadModeration().catch(e=>notify(e.message,'error'));if(tab==='money')loadMoney().catch(e=>notify(e.message,'error'));if(tab==='promotions')loadPromotions().catch(e=>notify(e.message,'error'));if(tab==='content')loadContent().catch(e=>notify(e.message,'error'));if(tab==='system')loadSystem().catch(e=>notify(e.message,'error'))},[tab,loadAnalytics,loadUsers,loadVerification,loadModeration,loadMoney,loadPromotions,loadContent,loadSystem,notify])
 
-  const refresh=async()=>{try{setBusy(true);await loadCore(); if(tab==='users')await loadUsers(); if(tab==='verification')await loadVerification(); if(tab==='moderation')await loadModeration(); if(tab==='money')await loadMoney(); if(tab==='promotions')await loadPromotions(); if(tab==='content')await loadContent(); if(tab==='system')await loadSystem();notify('HQ refreshed')}catch(e){notify(e.message,'error')}finally{setBusy(false)}}
+  const refresh=async()=>{try{setBusy(true);await loadCore(); if(tab==='analytics')await loadAnalytics(); if(tab==='users')await loadUsers(); if(tab==='verification')await loadVerification(); if(tab==='moderation')await loadModeration(); if(tab==='money')await loadMoney(); if(tab==='promotions')await loadPromotions(); if(tab==='content')await loadContent(); if(tab==='system')await loadSystem();notify('HQ refreshed')}catch(e){notify(e.message,'error')}finally{setBusy(false)}}
   const saveConfig=async(section,patch)=>{try{setBusy(true);await adminService.updateConfig(section,patch);await loadCore();notify(`${section} controls saved`)}catch(e){notify(e.message,'error')}finally{setBusy(false)}}
   const saveRank=async(rank)=>{try{setBusy(true);await adminService.upsertRank(rank);await loadCore();notify('Rank saved')}catch(e){notify(e.message,'error')}finally{setBusy(false)}}
   const setFlag=async(flag)=>{try{setBusy(true);await adminService.setFlag(flag.key,!flag.enabled,flag.payload);await loadCore();notify(`${flag.label} ${!flag.enabled?'enabled':'disabled'}`)}catch(e){notify(e.message,'error')}finally{setBusy(false)}}
@@ -115,6 +117,8 @@ export default function HQ() {
 
       {tab==='overview' && <div className="hq-view"><div className="hq-kpis"><Stat icon={Users} label="Total users" value={fmt(dashboard.users_total)} note={`+${fmt(dashboard.users_24h)} / 24h`}/><Stat icon={MessageCircle} label="Messages / 24h" value={fmt(dashboard.messages_24h)}/><Stat icon={Zap} label="Aura / 24h" value={`+${fmt(dashboard.aura_24h)}`}/><Stat icon={Gamepad2} label="Rooms / 24h" value={fmt(dashboard.rooms_24h)} note={`${fmt(dashboard.games_24h)} games`}/><Stat icon={BadgeCheck} label="Connections" value={fmt(dashboard.connections_total)}/><Stat icon={ShieldAlert} label="Open reports" value={fmt(dashboard.pending_reports)} note={`${fmt(dashboard.suspended)} suspended`}/></div>
         <div className="hq-grid-2"><article className="hq-card"><SectionHead eyebrow="LIVE PRODUCT" title="Feature switches"/><div className="hq-flag-list">{controls.flags.slice(0,7).map(f=><button key={f.key} className={`hq-flag ${f.enabled?'on':''}`} disabled={!session.can_manage_config||busy} onClick={()=>setFlag(f)}><div><strong>{f.label}</strong><span>{f.description}</span></div><i/></button>)}</div></article><article className="hq-card hq-command-card"><SectionHead eyebrow="STATUS" title="CodaVybes at a glance"/><div className="hq-command-row"><span>Onboarded profiles</span><strong>{fmt(dashboard.onboarded)}</strong></div><div className="hq-command-row"><span>Banned accounts</span><strong>{fmt(dashboard.banned)}</strong></div><div className="hq-command-row"><span>Meet requests / 24h</span><strong>{fmt(dashboard.meet_requests_24h)}</strong></div><div className="hq-command-row"><span>Active feature flags</span><strong>{fmt(dashboard.active_flags)}</strong></div><div className="hq-command-row"><span>Control snapshot</span><strong>{dt(dashboard.generated_at)}</strong></div></article></div></div>}
+
+      {tab==='analytics' && <AnalyticsPanel data={analytics} canPrune={session.can_manage_config} onRefresh={loadAnalytics} notify={notify}/>}
 
       {tab==='users' && <div className="hq-view"><SectionHead eyebrow="ACCOUNT CONTROL" title="Users" action={<div className="hq-user-filters"><div className="hq-search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&loadUsers()} placeholder="username, name or email"/></div><select value={userStatus} onChange={e=>setUserStatus(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="banned">Banned</option></select><button className="hq-btn" onClick={loadUsers}>Search</button></div>}/><div className="hq-table-wrap"><table className="hq-table"><thead><tr><th>User</th><th>Aura</th><th>Age data</th><th>Status</th><th>Reports</th><th>Joined</th><th/></tr></thead><tbody>{users.map(u=><tr key={u.user_id}><td><div className="hq-table-user"><div>{initials(u.display_name||u.username)}</div><span><strong>{u.display_name||u.username}</strong><small>@{u.username} · {u.email}</small></span></div></td><td><strong className="gold hq-aura-value"><Zap size={13}/> +{fmt(u.aura_total)}</strong><small>{u.rank?.name}</small></td><td>{u.age ?? '—'}<small>{u.age_band||'—'}</small></td><td><span className={`hq-status status-${u.account_status}`}>{u.account_status}</span></td><td>{fmt(u.report_count)}</td><td>{new Date(u.created_at).toLocaleDateString()}</td><td><button className="hq-row-open" onClick={()=>setSelectedUser(u.user_id)}><ChevronRight size={17}/></button></td></tr>)}</tbody></table></div></div>}
 
@@ -136,6 +140,37 @@ export default function HQ() {
     </main>
     <Toast message={toast.message} tone={toast.tone} onClose={()=>setToast({message:'',tone:'ok'})}/>
     {selectedUser&&<UserDrawer id={selectedUser} permissions={session} onClose={()=>setSelectedUser(null)} onChanged={loadUsers} notify={notify}/>} 
+  </div>
+}
+
+function MetricList({ rows = [], labelKey, valueKey = 'events', secondaryKey = 'users', empty = 'No analytics yet' }) {
+  const max = Math.max(1, ...rows.map(row=>Number(row[valueKey] || 0)))
+  return <div className="hq-metric-list">{rows.length ? rows.map((row,index)=><div className="hq-metric-row" key={`${labelKey}-${index}`}>
+    <div><strong>{row[labelKey] || 'Unknown'}</strong><span>{fmt(row[secondaryKey])} users</span></div>
+    <em>{fmt(row[valueKey])}</em>
+    <i><b style={{width:`${Math.max(7, Math.round((Number(row[valueKey] || 0) / max) * 100))}%`}}/></i>
+  </div>) : <div className="hq-empty hq-empty--small"><Activity size={24}/><h3>{empty}</h3></div>}</div>
+}
+
+function AnalyticsPanel({ data, canPrune, onRefresh, notify }) {
+  const [days,setDays]=useState(90)
+  const prune=async()=>{try{const res=await adminService.pruneAnalytics(days);await onRefresh();notify(`Analytics cleaned: ${fmt(res?.deleted)} events older than ${res?.retention_days||days} days`)}catch(e){notify(e.message,'error')}}
+  if(!data)return <div className="hq-view"><div className="hq-card hq-loading-card"><div className="hq-loader"/><strong>Loading analytics…</strong></div></div>
+  const k=data.kpis||{}
+  const locationRows=(data.locations||[]).map(row=>({...row, label:[row.city,row.region,row.country].filter(v=>v&&v!=='Unknown'&&v!=='--').join(', ') || 'Unknown'}))
+  const pageRows=(data.top_pages||[]).map(row=>({...row, label:row.page_path || '/'}))
+  return <div className="hq-view">
+    <SectionHead eyebrow="FIRST-PARTY ANALYTICS" title="Active users, locations and launch health" action={<div className="hq-analytics-actions"><button className="hq-btn" onClick={onRefresh}><RefreshCw size={15}/> Refresh</button>{canPrune&&<><input type="number" min="7" max="365" value={days} onChange={e=>setDays(e.target.value)}/><button className="hq-btn" onClick={prune}><Trash2 size={15}/> Prune</button></>}</div>}/>
+    <div className="hq-alert hq-analytics-note"><Shield size={17}/><div><strong>Private chats are not tracked.</strong><span>{data.privacy?.note} IP mode for your role: {data.privacy?.ip_mode || 'masked'}.</span></div></div>
+    <div className="hq-kpis hq-kpis--analytics"><Stat icon={Activity} label="Active users" value={fmt(k.active_users_15m)} note={`${fmt(k.active_sessions_15m)} sessions / 15m`}/><Stat icon={Users} label="Unique users" value={fmt(k.unique_users_24h)} note="Last 24h"/><Stat icon={MousePointerClick} label="Events" value={fmt(k.events_24h)} note={`${fmt(k.page_views_24h)} page views`}/><Stat icon={MessageCircle} label="Messages" value={fmt(k.messages_24h)} note="Last 24h"/><Stat icon={Megaphone} label="Posts" value={fmt(k.posts_24h)} note={`+${fmt(k.new_users_24h)} users`}/><Stat icon={BadgeDollarSign} label="Ads / 24h" value={fmt(k.promotion_impressions_24h)} note={`${fmt(k.promotion_clicks_24h)} clicks`}/></div>
+    <div className="hq-grid-2">
+      <article className="hq-card"><div className="hq-card-title"><div><span>PLATFORM MIX</span><h3>Web, Android, Windows</h3></div><MonitorSmartphone size={18}/></div><MetricList rows={data.platforms||[]} labelKey="platform"/></article>
+      <article className="hq-card"><div className="hq-card-title"><div><span>DEVICE MIX</span><h3>Mobile, tablet, desktop</h3></div><BarChart3 size={18}/></div><MetricList rows={data.devices||[]} labelKey="device_type"/></article>
+      <article className="hq-card"><div className="hq-card-title"><div><span>LOCATION</span><h3>Top countries and cities</h3></div><MapPin size={18}/></div><MetricList rows={locationRows} labelKey="label"/></article>
+      <article className="hq-card"><div className="hq-card-title"><div><span>PAGES</span><h3>Most viewed screens</h3></div><Globe2 size={18}/></div><MetricList rows={pageRows} labelKey="label" valueKey="views"/></article>
+    </div>
+    <SectionHead eyebrow="LIVE SESSIONS" title="Recent active users"/>
+    <div className="hq-table-wrap"><table className="hq-table hq-analytics-table"><thead><tr><th>User</th><th>Platform</th><th>Location</th><th>IP</th><th>Last page</th><th>Last seen</th></tr></thead><tbody>{(data.recent_sessions||[]).map(row=><tr key={row.session_id}><td><div className="hq-session-user"><strong>{row.display_name||row.username||'Unknown'}</strong><small>@{row.username||'unknown'}</small></div></td><td>{row.platform}<small>{row.device_type}</small></td><td>{[row.city,row.region,row.country].filter(v=>v&&v!=='Unknown'&&v!=='--').join(', ') || 'Unknown'}</td><td>{row.ip_address||'—'}</td><td>{row.last_page||'/'}</td><td><span className="hq-time-cell"><Clock3 size={13}/>{dt(row.last_seen_at)}</span></td></tr>)}</tbody></table>{!(data.recent_sessions||[]).length&&<div className="hq-empty hq-empty--small"><Activity size={26}/><h3>No live sessions yet</h3><p>Ask a signed-in user to accept analytics consent and browse the app.</p></div>}</div>
   </div>
 }
 

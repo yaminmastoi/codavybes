@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
 
   if (!window.Capacitor?.isNativePlatform?.() && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/vybe-sw.js').catch((error) => console.warn('CodaVybes service worker:', error))
+      navigator.serviceWorker.register('/codavybes-sw.js').catch((error) => console.warn('CodaVybes service worker:', error))
     }, { once: true })
   }
 }

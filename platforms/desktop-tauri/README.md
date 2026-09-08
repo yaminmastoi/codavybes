@@ -1,6 +1,6 @@
 # CodaVybes Desktop — Tauri shell
 
-This shell packages the same CodaVybes React build as a lightweight Windows/macOS desktop application.
+This shell packages the same CodaVybes React build as a lightweight Windows/Linux/macOS desktop application.
 
 ## Requirements
 
@@ -27,7 +27,23 @@ Production bundle:
 npm run build
 ```
 
+Windows bundle:
+
+```bash
+npm run build:windows
+```
+
+Linux bundle:
+
+```bash
+npm run build:linux
+```
+
 Tauri will run the root `npm run build` first and bundle `dist/`.
+
+Linux builds must run on a Linux machine or Linux GitHub Actions runner with the
+Tauri WebKit/AppIndicator prerequisites installed. The included Ubuntu workflow
+uploads `deb`, `rpm` and `AppImage` artifacts.
 
 The Tauri commands run from `platforms/desktop-tauri`, so the root frontend is
 reached with `../..`. The `frontendDist` path remains `../../../dist` because
@@ -47,8 +63,8 @@ make sure the workflow runs the desktop command from the shell directory:
 The Windows shell includes Tauri's opener, deep-link and single-instance
 plugins. Google opens in the system browser and returns to the installed app at:
 
-- `app.vybe.desktop://auth/callback`
-- `app.vybe.desktop://auth/reset-password`
+- `app.codavybes.desktop://auth/callback`
+- `app.codavybes.desktop://auth/reset-password`
 
 Add both URLs to the Supabase Auth redirect allow list before building the
 installer. The protocol is registered by the installed Windows bundle.
@@ -59,7 +75,7 @@ Before public desktop distribution add:
 
 - Native desktop notifications for background delivery
 - Auto-update signing/feed
-- Windows code signing / macOS notarization
+- Windows code signing / Linux package signing / macOS notarization
 - Optional system tray behavior
 
 Do not embed Supabase service-role credentials in the desktop bundle.

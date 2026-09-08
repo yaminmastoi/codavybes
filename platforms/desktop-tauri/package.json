@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "build:windows": "tauri build --bundles msi,nsis",
+    "build:linux": "tauri build --bundles deb,rpm,appimage"
   },
   "devDependencies": {
     "@tauri-apps/cli": "latest"

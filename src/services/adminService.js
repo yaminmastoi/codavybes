@@ -21,6 +21,8 @@ async function edge(name, body) {
 export const adminService = {
   session: () => rpc('admin_get_session'),
   dashboard: () => rpc('admin_get_dashboard'),
+  analytics: () => rpc('admin_get_analytics'),
+  pruneAnalytics: (days = 90) => rpc('admin_prune_analytics', { p_days: Number(days) }),
   users: (query = '', status = 'all', limit = 50, offset = 0) => rpc('admin_list_users', { p_query: query, p_status: status, p_limit: limit, p_offset: offset }),
   user: async (id) => { const [base,wallet] = await Promise.all([rpc('admin_get_user', { p_user: id }), rpc('admin_get_user_wallet', { p_user: id })]); return { ...base, wallet_balance: wallet?.coin_balance ?? 0, lifetime_topup_coins: wallet?.lifetime_topup_coins ?? 0 } },
   setUserStatus: (id, status, reason, until = null) => rpc('admin_set_user_status', { p_user: id, p_status: status, p_reason: reason, p_until: until }),

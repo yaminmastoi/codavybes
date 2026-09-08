@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /hq
+Disallow: /chats
+Disallow: /rooms/
+Disallow: /meet/
+Disallow: /settings
+Disallow: /wallet
+Disallow: /shop
+Disallow: /vybe-plus
+Disallow: /notifications
+Disallow: /auth/
+Disallow: /reset-password
+
+Sitemap: https://codavybes.vercel.app/sitemap.xml

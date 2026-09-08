@@ -1,12 +1,13 @@
 import { Cookie, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { notifyAnalyticsConsent } from '../services/analyticsService'
 
 const KEY='codavybes-consent-v1'
 export default function ConsentBanner(){
   const [open,setOpen]=useState(false)
   useEffect(()=>{const sync=()=>{try{setOpen(!localStorage.getItem(KEY))}catch{setOpen(true)}};sync();window.addEventListener('codavybes:consent-reset',sync);return()=>window.removeEventListener('codavybes:consent-reset',sync)},[])
-  const save=(analytics)=>{try{localStorage.setItem(KEY,JSON.stringify({essential:true,analytics,at:new Date().toISOString()}))}catch{};setOpen(false)}
+  const save=(analytics)=>{try{localStorage.setItem(KEY,JSON.stringify({essential:true,analytics,at:new Date().toISOString()}))}catch{};notifyAnalyticsConsent();setOpen(false)}
   if(!open)return null
   return <aside className="consent-banner surface" role="dialog" aria-label="Privacy and cookies">
     <button className="consent-close" onClick={()=>save(false)} aria-label="Use essential only"><X size={16}/></button>

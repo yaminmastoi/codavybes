@@ -1,3 +1,3 @@
 fn main() {
-  vybe_lib::run();
+  codavybes_lib::run();
 }

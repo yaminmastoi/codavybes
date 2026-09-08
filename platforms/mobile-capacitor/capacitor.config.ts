@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'app.vybe.social',
+  appId: 'app.codavybes.social',
   appName: 'CodaVybes',
   webDir: '../../dist',
   server: {
@@ -15,7 +15,7 @@ const config: CapacitorConfig = {
       resize: 'body',
     },
     LocalNotifications: {
-      iconColor: '#665CFF',
+      iconColor: '#FF7A1C',
     },
   },
 }

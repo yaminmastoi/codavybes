@@ -1,7 +1,9 @@
 import { supabase } from '../lib/supabase'
 
-const CAPACITOR_SCHEME = 'app.vybe.social:'
-const TAURI_SCHEME = 'app.vybe.desktop:'
+const CAPACITOR_SCHEME = 'app.codavybes.social:'
+const TAURI_SCHEME = 'app.codavybes.desktop:'
+const LEGACY_CAPACITOR_SCHEME = 'app.vybe.social:'
+const LEGACY_TAURI_SCHEME = 'app.vybe.desktop:'
 const activeCallbacks = new Map()
 const completedCallbacks = new Map()
 
@@ -37,14 +39,14 @@ export function nativeAuthPlatform() {
 
 export function authRedirectUrl(destination = 'callback') {
   const cleanDestination = String(destination || 'callback').replace(/^\/+/, '')
-  if (capacitorRuntime()) return `app.vybe.social://auth/${cleanDestination}`
-  if (tauriRuntime()) return `app.vybe.desktop://auth/${cleanDestination}`
+  if (capacitorRuntime()) return `app.codavybes.social://auth/${cleanDestination}`
+  if (tauriRuntime()) return `app.codavybes.desktop://auth/${cleanDestination}`
   return `${window.location.origin}/auth/${cleanDestination}`
 }
 
 function parsedCallback(rawUrl) {
   const url = new URL(rawUrl)
-  const nativeScheme = url.protocol === CAPACITOR_SCHEME || url.protocol === TAURI_SCHEME
+  const nativeScheme = [CAPACITOR_SCHEME, TAURI_SCHEME, LEGACY_CAPACITOR_SCHEME, LEGACY_TAURI_SCHEME].includes(url.protocol)
   const webCallback = url.origin === window.location.origin && url.pathname.startsWith('/auth/')
   if (!nativeScheme && !webCallback) return null
   if (nativeScheme && url.hostname !== 'auth') return null

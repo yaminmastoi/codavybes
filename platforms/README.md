@@ -19,7 +19,7 @@ See `mobile-capacitor/README.md`.
 
 Capacitor copies the same root `dist/` into native projects. Keep Supabase/RLS as the source of truth.
 
-## Windows / macOS
+## Windows / Linux / macOS
 
 See `desktop-tauri/README.md`.
 

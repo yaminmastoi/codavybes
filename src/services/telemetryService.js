@@ -8,13 +8,13 @@ const LOCATION_CACHE_MS = 15 * 60 * 1000
 
 export const APP_PLATFORM = (() => {
   const configured = String(import.meta.env.VITE_APP_PLATFORM || '').toLowerCase()
-  if (['web', 'android', 'windows'].includes(configured)) return configured
-  if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) return 'windows'
+  if (['web', 'android', 'windows', 'linux'].includes(configured)) return configured
+  if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) return /Linux/i.test(navigator.userAgent || '') ? 'linux' : 'windows'
   if (typeof window !== 'undefined' && window.Capacitor?.getPlatform?.() === 'android') return 'android'
   return 'web'
 })()
 
-export const APP_VERSION = String(import.meta.env.VITE_APP_VERSION || '13.4.0')
+export const APP_VERSION = String(import.meta.env.VITE_APP_VERSION || '1.0.1')
 
 let locationCache = null
 let edgeUnavailableUntil = 0

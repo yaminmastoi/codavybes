@@ -35,6 +35,16 @@ export async function setBirthDate(birthDate) {
   return data
 }
 
+export async function setBirthDateAndGender({ birthDate, gender }) {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('set_birth_date_and_gender', {
+    p_birth_date: birthDate,
+    p_gender: gender,
+  })
+  if (error) throw error
+  return data
+}
+
 export async function saveProfileDetails({ displayName, bio }) {
   const client = requireSupabase()
   const { data, error } = await client.rpc('set_profile_details', {

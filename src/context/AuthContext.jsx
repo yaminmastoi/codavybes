@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined
-    const timer = window.setTimeout(() => setIntroReady(true), 1450)
+    const timer = window.setTimeout(() => setIntroReady(true), 2450)
     return () => window.clearTimeout(timer)
   }, [])
 
@@ -62,12 +62,27 @@ export function AuthProvider({ children }) {
 
     let mounted = true
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data, error }) => {
       if (!mounted) return
-      if (data.session?.user) setOnboardingLoading(true)
-      setSession(data.session ?? null)
-      setUser(data.session?.user ?? null)
+      let restored = data?.session ?? null
+      if (error) console.warn('CodaVybes session restore:', error)
+      // Native shells can resume after their JS timers were suspended. If a
+      // persisted refresh token exists, refresh it before deciding the user is out.
+      if (restored) {
+        const expiresSoon = !restored.expires_at || restored.expires_at * 1000 < Date.now() + 10 * 60 * 1000
+        if (expiresSoon) {
+          const refreshed = await supabase.auth.refreshSession().catch(() => null)
+          restored = refreshed?.data?.session || restored
+        }
+      }
+      if (!mounted) return
+      if (restored?.user) setOnboardingLoading(true)
+      setSession(restored)
+      setUser(restored?.user ?? null)
       setLoading(false)
+    }).catch((error) => {
+      console.error('Unable to restore CodaVybes session:', error)
+      if (mounted) setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {

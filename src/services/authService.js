@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { authRedirectUrl, nativeAuthPlatform, openOAuthUrl } from './authRedirectService'
+import { clearPendingSecondFactor } from './secondFactorService'
 
 function requireSupabase() {
   if (!isSupabaseConfigured || !supabase) {
@@ -45,6 +46,21 @@ export async function signInWithGoogle() {
   return data
 }
 
+export async function signInWithX() {
+  const client = requireSupabase()
+  const native = nativeAuthPlatform()
+  const { data, error } = await client.auth.signInWithOAuth({
+    provider: 'x',
+    options: {
+      redirectTo: authRedirectUrl('callback'),
+      skipBrowserRedirect: Boolean(native),
+    },
+  })
+  if (error) throw error
+  if (native) await openOAuthUrl(data.url)
+  return data
+}
+
 export async function resendSignupConfirmation(email) {
   const client = requireSupabase()
   const { data, error } = await client.auth.resend({
@@ -75,6 +91,7 @@ export async function updatePassword(password) {
 
 export async function signOut() {
   const client = requireSupabase()
+  clearPendingSecondFactor()
   const { error } = await client.auth.signOut()
   if (error) throw error
 }

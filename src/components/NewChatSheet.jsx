@@ -6,7 +6,7 @@ import VerifiedBadge from './VerifiedBadge'
 import { createDirectChat, createGroupChat, searchChatPeople } from '../services/chatService'
 
 function initials(name = 'V') {
-  return name.trim().split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
+  return String(name ?? '').trim().split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
 }
 
 export default function NewChatSheet({ onClose, onCreated }) {

@@ -10,7 +10,7 @@ import { PageSkeleton } from '../components/Loaders'
 import VerifiedBadge from '../components/VerifiedBadge'
 
 function initials(name = 'V') {
-  return name.trim().split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
+  return String(name ?? '').trim().split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
 }
 
 function ageLabel(value) {

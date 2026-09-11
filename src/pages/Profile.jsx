@@ -16,7 +16,7 @@ import { getMyGameStats } from '../services/roomService'
 import { getMyConnections } from '../services/socialService'
 import { adminService } from '../services/adminService'
 
-function initials(name = 'CodaVybes') { return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'V' }
+function initials(name = 'CodaVybes') { return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'V' }
 function niceSlug(slug) { return slug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) }
 
 export default function Profile() {

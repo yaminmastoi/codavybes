@@ -1,0 +1,29 @@
+CodaVybes V1.0.1 production hardening pass
+
+.github/workflows/build-android-debug.yml
+.github/workflows/build-android-release.yml
+.github/workflows/build-windows.yml
+.github/workflows/desktop-linux.yml
+.gitignore
+package.json
+package-lock.json
+platforms/mobile-capacitor/package.json
+platforms/mobile-capacitor/package-lock.json
+platforms/desktop-tauri/package.json
+platforms/desktop-tauri/src-tauri/Cargo.toml
+platforms/desktop-tauri/src-tauri/tauri.conf.json
+scripts/apply-android-branding.mjs
+scripts/apply-android-version.mjs
+scripts/verify-launch-parity.mjs
+src/admin/AnalyticsPanel.jsx
+src/onboarding/OnboardingFlow.jsx
+src/services/pushNotificationService.js
+src/services/secondFactorService.js
+src/services/telemetryService.js
+src/styles/v13_4_responsive.css
+supabase/functions/push-dispatch/index.ts
+supabase/migrations/024_platform_leaderboard.sql
+PRODUCTION_RELEASE_V1.0.1.md
+CHANGED_FILES_PRODUCTION_V1.0.1.txt
+
+Removed stale generated release binaries from public/downloads/.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Check, Eye, EyeOff, Gamepad2, Link2, Mail, MonitorSmartphone, ShieldCheck, Sparkles, X, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
@@ -7,10 +7,8 @@ import SetupRequired from '../components/SetupRequired'
 import { useAuth } from '../context/AuthContext'
 import { interests as fallbackInterests } from '../data/mock'
 import {
-  resendSignupConfirmation,
-  signInWithEmail,
   signInWithGoogle,
-  signUpWithEmail,
+  signInWithX,
 } from '../services/authService'
 import {
   checkUsernameAvailability,
@@ -19,13 +17,27 @@ import {
   listInterests,
   saveInterests,
   saveProfileDetails,
-  setBirthDate,
+  setBirthDateAndGender,
 } from '../services/onboardingService'
-import { supabase } from '../lib/supabase'
+import {
+  beginPasswordSecondFactor,
+  clearPendingSecondFactor,
+  getPendingSecondFactor,
+  resendSecondFactor,
+  verifySecondFactor,
+} from '../services/secondFactorService'
 
-const orderedSteps = ['welcome', 'email', 'verify', 'username', 'dob', 'profile', 'interests', 'reveal']
+const orderedSteps = ['welcome', 'email', 'otp', 'username', 'identity', 'profile', 'interests', 'reveal']
 
 const fallbackSlugOverrides = { 'Late Night Talks': 'night_owls', Fitness: 'gym' }
+
+const genderOptions = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'non_binary', label: 'Non-binary' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+]
 
 function normalizeFallbackInterest(label) {
   return {
@@ -47,9 +59,8 @@ function passwordScore(password) {
 function pickStepFromState(state) {
   if (!state) return 'username'
   if (state.onboarding_complete) return 'complete'
-  if (state.eligibility_status === 'ineligible') return 'ineligible'
   if (!state.username) return 'username'
-  if (!state.birth_date_set) return 'dob'
+  if (!state.birth_date_set || !state.gender_set) return 'identity'
   if (!state.display_name) return 'profile'
   if (!Array.isArray(state.interests) || state.interests.length < 3) return 'interests'
   return 'reveal'
@@ -60,18 +71,35 @@ export default function OnboardingFlow() {
   const { configured, loading, onboardingLoading, session, onboarding, refreshOnboarding } = useAuth()
   const [step, setStep] = useState('welcome')
   const [authMode, setAuthMode] = useState('signup')
-  const [pendingEmail, setPendingEmail] = useState('')
+  const [pendingChallenge, setPendingChallenge] = useState(() => getPendingSecondFactor())
+
+  useEffect(() => {
+    const syncPending = (event) => setPendingChallenge(event?.detail || getPendingSecondFactor())
+    const clearPending = () => setPendingChallenge(null)
+    window.addEventListener('codavybes:otp-pending', syncPending)
+    window.addEventListener('codavybes:otp-cleared', clearPending)
+    return () => {
+      window.removeEventListener('codavybes:otp-pending', syncPending)
+      window.removeEventListener('codavybes:otp-cleared', clearPending)
+    }
+  }, [])
 
   useEffect(() => {
     if (loading || onboardingLoading || !configured) return
+    const pending = getPendingSecondFactor()
+    if (!session && pending) {
+      setPendingChallenge(pending)
+      setStep('otp')
+      return
+    }
     if (session) {
       const next = pickStepFromState(onboarding)
       if (next === 'complete') navigate('/home', { replace: true })
       else setStep(next)
-    } else if (step !== 'email' && step !== 'verify') {
+    } else if (step !== 'email' && step !== 'otp') {
       setStep('welcome')
     }
-  }, [configured, loading, onboardingLoading, session, onboarding, navigate])
+  }, [configured, loading, onboardingLoading, session, onboarding, navigate, step])
 
   if (!configured) return <SetupRequired />
 
@@ -81,14 +109,14 @@ export default function OnboardingFlow() {
   function back() {
     if (step === 'welcome') return
     if (!session) {
-      if (step === 'verify') setStep('email')
-      else setStep('welcome')
+      if (step === 'otp') { clearPendingSecondFactor(); setPendingChallenge(null) }
+      setStep(step === 'email' ? 'welcome' : 'welcome')
       return
     }
     const map = {
       username: 'welcome',
-      dob: 'username',
-      profile: 'dob',
+      identity: 'username',
+      profile: 'identity',
       interests: 'profile',
       reveal: 'interests',
     }
@@ -117,27 +145,21 @@ export default function OnboardingFlow() {
           <div><span><Gamepad2 size={19}/></span><strong>Enter Rooms</strong><small>Hang out instead of just scrolling.</small></div>
           <div><span><MonitorSmartphone size={19}/></span><strong>Everywhere</strong><small>Web, mobile and desktop. One account.</small></div>
         </div>
-        <div className="onboarding-brand-foot"><ShieldCheck size={15}/><span>Private by design · Age-safe discovery · Synced in real time</span></div>
+        <div className="onboarding-brand-foot"><ShieldCheck size={15}/><span>Private by design · Open discovery · Synced in real time</span></div>
       </aside>
       <div className="onboarding-card">
         <header className="onboarding-topbar">
-          <button className="icon-btn" onClick={back} disabled={step === 'welcome' || step === 'ineligible'}><ArrowLeft size={20} /></button>
+          <button className="icon-btn" onClick={back} disabled={step === 'welcome'}><ArrowLeft size={20} /></button>
           <Logo />
-          <span className="step-count">{step === 'ineligible' ? 'Gate' : `${visibleIndex + 1}/${orderedSteps.length}`}</span>
+          <span className="step-count">{`${visibleIndex + 1}/${orderedSteps.length}`}</span>
         </header>
-        {step !== 'ineligible' && <div className="progress"><span style={{ width: `${progress}%` }} /></div>}
+        <div className="progress"><span style={{ width: `${progress}%` }} /></div>
 
-        {step === 'welcome' && <Welcome onGoogle={signInWithGoogle} onEmail={() => openEmail('signup')} onLogin={() => openEmail('login')} />}
-        {step === 'email' && <EmailStep mode={authMode} setMode={setAuthMode} onForgotPassword={() => navigate('/forgot-password')} onVerifiedEmail={(email) => { setPendingEmail(email); setStep('verify') }} onAuthenticated={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
-        {step === 'verify' && <VerifyStep email={pendingEmail} onContinue={async () => {
-          const { data } = await supabase.auth.getSession()
-          if (!data.session) throw new Error('Email is not confirmed in this browser yet. Open the verification link, then try again.')
-          const state = await refreshOnboarding()
-          setStep(pickStepFromState(state))
-        }} />}
+        {step === 'welcome' && <Welcome onGoogle={signInWithGoogle} onX={signInWithX} onEmail={() => openEmail('signup')} onLogin={() => openEmail('login')} />}
+        {step === 'email' && <EmailStep mode={authMode} setMode={setAuthMode} onForgotPassword={() => navigate('/forgot-password')} onChallenge={(challenge) => { setPendingChallenge(challenge); setStep('otp') }} />}
+        {step === 'otp' && <OtpStep challenge={pendingChallenge} onChallenge={setPendingChallenge} onVerified={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
         {step === 'username' && <UsernameStep initialValue={onboarding?.username || ''} onNext={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
-        {step === 'dob' && <DobStep onNext={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
-        {step === 'ineligible' && <IneligibleStep />}
+        {step === 'identity' && <IdentityStep initialBirthDate={onboarding?.birth_date || ''} initialGender={onboarding?.gender || ''} onNext={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
         {step === 'profile' && <ProfileStep initialName={onboarding?.display_name || ''} initialBio={onboarding?.bio || ''} onNext={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
         {step === 'interests' && <InterestsStep initialSelected={onboarding?.interests || []} onNext={async () => { const state = await refreshOnboarding(); setStep(pickStepFromState(state)) }} />}
         {step === 'reveal' && <RevealStep aura={onboarding?.aura_total || 1} onNext={async () => {
@@ -145,18 +167,19 @@ export default function OnboardingFlow() {
           await refreshOnboarding()
           navigate('/home', { replace: true })
         }} />}
+        <footer className="onboarding-codabite">Powered by <strong>CodaBite</strong></footer>
       </div>
     </div>
   )
 }
 
-function Welcome({ onGoogle, onEmail, onLogin }) {
+function Welcome({ onGoogle, onX, onEmail, onLogin }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const completed = () => setBusy(false)
-    const failed = (event) => { setBusy(false); setError(event.detail || 'Google sign in could not finish.') }
+    const failed = (event) => { setBusy(false); setError(event.detail || 'Social sign in could not finish.') }
     window.addEventListener('codavybes:auth-complete', completed)
     window.addEventListener('codavybes:auth-error', failed)
     return () => {
@@ -165,10 +188,10 @@ function Welcome({ onGoogle, onEmail, onLogin }) {
     }
   }, [])
 
-  async function google() {
+  async function oauth(provider) {
     try {
       setBusy(true); setError('')
-      await onGoogle()
+      await provider()
     } catch (e) {
       setError(e.message)
       setBusy(false)
@@ -182,14 +205,15 @@ function Welcome({ onGoogle, onEmail, onLogin }) {
     <p className="lead">Meet people, build bonds, play together and earn Aura.</p>
     {error && <div className="notice error-box">{error}</div>}
     <div className="stack">
-      <button className="btn btn--light" onClick={google} disabled={busy}>{busy ? 'Opening Google…' : 'Continue with Google'}</button>
+      <button className="btn btn--light" onClick={() => oauth(onGoogle)} disabled={busy}>{busy ? 'Opening sign in…' : 'Continue with Google'}</button>
       <button className="btn btn--outline" onClick={onEmail}><Mail size={18}/> Continue with Email</button>
-      <button className="btn btn--ghost" onClick={onLogin}>Log in</button>
+      <button className="btn btn--outline" onClick={() => oauth(onX)} disabled={busy}><span className="x-auth-mark">𝕏</span> Continue with X</button>
+      <button className="btn btn--ghost" onClick={onLogin}>Sign in with email/password</button>
     </div>
   </section>
 }
 
-function EmailStep({ mode, setMode, onForgotPassword, onVerifiedEmail, onAuthenticated }) {
+function EmailStep({ mode, setMode, onForgotPassword, onChallenge }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -204,14 +228,8 @@ function EmailStep({ mode, setMode, onForgotPassword, onVerifiedEmail, onAuthent
     if (!validEmail || !validPassword) return
     try {
       setBusy(true); setError('')
-      if (mode === 'signup') {
-        const data = await signUpWithEmail({ email, password })
-        if (data.session) await onAuthenticated()
-        else onVerifiedEmail(email)
-      } else {
-        await signInWithEmail({ email, password })
-        await onAuthenticated()
-      }
+      const challenge = await beginPasswordSecondFactor({ mode, email, password })
+      onChallenge(challenge)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -222,7 +240,7 @@ function EmailStep({ mode, setMode, onForgotPassword, onVerifiedEmail, onAuthent
   return <section className="step">
     <p className="eyebrow">YOUR ACCOUNT</p>
     <h2>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2>
-    <p className="muted copy">{mode === 'signup' ? 'Use an inbox you actually control. Your email must be confirmed before CodaVybes onboarding unlocks.' : 'Sign in with your verified email and password.'}</p>
+    <p className="muted copy">{mode === 'signup' ? 'Create your account, then verify the 4-digit code sent to this inbox before onboarding unlocks.' : 'Enter your email and password first. A 4-digit code will then be sent to your registered email.'}</p>
     <form onSubmit={submit}>
       <label>Email<div className="input-wrap"><Mail size={18}/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />{validEmail && <Check className="valid" size={18}/>}</div></label>
       <label>Password<div className="input-wrap"><ShieldCheck size={18}/><input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'Create a strong password' : 'Your password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} /><button type="button" className="input-icon" onClick={() => setShowPassword((v) => !v)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div></label>
@@ -235,39 +253,83 @@ function EmailStep({ mode, setMode, onForgotPassword, onVerifiedEmail, onAuthent
   </section>
 }
 
-function VerifyStep({ email, onContinue }) {
+function OtpStep({ challenge, onChallenge, onVerified }) {
+  const [digits, setDigits] = useState(['', '', '', ''])
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const inputs = useRef([])
 
-  async function verify() {
+  useEffect(() => { inputs.current[0]?.focus() }, [])
+
+  function setDigit(index, value) {
+    const digit = String(value || '').replace(/\D/g, '').slice(-1)
+    setDigits((current) => current.map((item, i) => i === index ? digit : item))
+    if (digit && index < 3) inputs.current[index + 1]?.focus()
+  }
+
+  function keyDown(index, event) {
+    if (event.key === 'Backspace' && !digits[index] && index > 0) inputs.current[index - 1]?.focus()
+  }
+
+  function paste(event) {
+    const code = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4)
+    if (code.length !== 4) return
+    event.preventDefault()
+    setDigits(code.split(''))
+    inputs.current[3]?.focus()
+  }
+
+  async function submit(event) {
+    event?.preventDefault()
+    const code = digits.join('')
+    if (!/^\d{4}$/.test(code)) return
     try {
-      setBusy(true); setError('')
-      await onContinue()
-    } catch (e) {
-      setError(e.message)
-    } finally { setBusy(false) }
+      setBusy(true); setError(''); setMessage('')
+      await verifySecondFactor(code)
+      await onVerified()
+    } catch (e) { setError(e.message) }
+    finally { setBusy(false) }
   }
 
   async function resend() {
     try {
       setBusy(true); setError(''); setMessage('')
-      await resendSignupConfirmation(email)
-      setMessage('Verification email sent again.')
+      const next = await resendSecondFactor()
+      onChallenge(next)
+      setDigits(['', '', '', ''])
+      setMessage('A new 4-digit code was sent.')
+      setTimeout(() => inputs.current[0]?.focus(), 0)
     } catch (e) { setError(e.message) }
     finally { setBusy(false) }
   }
 
-  return <section className="step verify-step">
+  const destination = challenge?.masked_email || challenge?.email || 'your registered email'
+  return <section className="step verify-step otp-step">
     <div className="mail-orb"><Mail size={32}/></div>
-    <p className="eyebrow">VERIFY YOUR EMAIL</p>
-    <h2>Check your inbox.</h2>
-    <p className="muted copy">We sent a confirmation link to <strong>{email || 'your email'}</strong>. CodaVybes will not unlock the identity setup until that inbox is verified.</p>
-    <div className="notice"><ShieldCheck size={17}/> Random/unreachable emails cannot finish onboarding.</div>
-    {message && <div className="notice success-box"><Check size={18}/>{message}</div>}
-    {error && <div className="notice error-box">{error}</div>}
-    <button className="btn btn--primary" onClick={verify} disabled={busy}>{busy ? 'Checking…' : "I've verified — continue"}</button>
-    <button className="btn btn--ghost" onClick={resend} disabled={busy}>Resend verification email</button>
+    <p className="eyebrow">2-STEP VERIFICATION</p>
+    <h2>Enter your 4-digit code.</h2>
+    <p className="muted copy">We sent a one-time verification code to <strong>{destination}</strong>. The code expires in 5 minutes.</p>
+    <form onSubmit={submit}>
+      <div className="otp-grid" onPaste={paste} aria-label="4 digit email verification code">
+        {digits.map((digit, index) => <input
+          key={index}
+          ref={(node) => { inputs.current[index] = node }}
+          value={digit}
+          onChange={(event) => setDigit(index, event.target.value)}
+          onKeyDown={(event) => keyDown(index, event)}
+          inputMode="numeric"
+          autoComplete={index === 0 ? 'one-time-code' : 'off'}
+          maxLength={1}
+          aria-label={`Digit ${index + 1}`}
+        />)}
+      </div>
+      <div className="notice"><ShieldCheck size={17}/> Password/social sign-in is only completed after this email code is verified.</div>
+      {message && <div className="notice success-box"><Check size={18}/>{message}</div>}
+      {error && <div className="notice error-box">{error}</div>}
+      <button className="btn btn--primary" disabled={digits.join('').length !== 4 || busy}>{busy ? 'Verifying…' : 'Verify & continue'}</button>
+    </form>
+    <button type="button" className="btn btn--ghost" onClick={resend} disabled={busy}>Resend code</button>
   </section>
 }
 
@@ -315,8 +377,9 @@ function UsernameStep({ initialValue, onNext }) {
   </section>
 }
 
-function DobStep({ onNext }) {
-  const [birthDate, setBirthDateValue] = useState('')
+function IdentityStep({ initialBirthDate, initialGender, onNext }) {
+  const [birthDate, setBirthDateValue] = useState(initialBirthDate || '')
+  const [gender, setGender] = useState(initialGender || '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const today = new Date().toISOString().slice(0, 10)
@@ -324,34 +387,36 @@ function DobStep({ onNext }) {
   async function submit() {
     try {
       setBusy(true); setError('')
-      const result = await setBirthDate(birthDate)
-      if (!result?.eligible) throw new Error('CodaVybes is available for ages 10 and up.')
+      await setBirthDateAndGender({ birthDate, gender })
       await onNext()
-    } catch (e) {
-      setError(e.message)
-      if (/outside CodaVybes/.test(e.message)) window.location.reload()
-    } finally { setBusy(false) }
+    } catch (e) { setError(e.message) }
+    finally { setBusy(false) }
   }
 
   return <section className="step">
-    <p className="eyebrow">AGE & SAFETY</p>
-    <h2>When's your birthday?</h2>
-    <p className="muted copy">DOB is private. It powers the 10+ eligibility gate and age-aware safety controls, and normal users cannot edit it later from Settings.</p>
-    <label>Birthday<div className="input-wrap date-input"><input type="date" value={birthDate} onChange={(e) => setBirthDateValue(e.target.value)} max={today}/></div></label>
-    <div className="notice"><ShieldCheck size={17}/> Current launch rule: age 10+. Eligible members can discover and connect across age groups; blocks and account restrictions decide availability.</div>
+    <p className="eyebrow">ABOUT YOU</p>
+    <h2>DOB & gender</h2>
+    <p className="muted copy">Add your date of birth and gender to complete your profile setup. DOB does not restrict who you can discover, follow, befriend, message or interact with.</p>
+    <label>Date of birth<div className="input-wrap date-input"><input type="date" value={birthDate} onChange={(e) => setBirthDateValue(e.target.value)} max={today} disabled={Boolean(initialBirthDate)}/></div></label>
+    <fieldset className="gender-fieldset">
+      <legend>Gender</legend>
+      <div className="gender-options" role="radiogroup" aria-label="Gender">
+        {genderOptions.map((option) => <button
+          type="button"
+          key={option.value}
+          role="radio"
+          aria-checked={gender === option.value}
+          className={gender === option.value ? 'gender-option is-selected' : 'gender-option'}
+          onClick={() => setGender(option.value)}
+        >
+          <span>{option.label}</span>
+          {gender === option.value && <Check size={16} aria-hidden="true"/>}
+        </button>)}
+      </div>
+    </fieldset>
+    <div className="notice"><ShieldCheck size={17}/> These profile details are stored in Supabase. They are not used as an age gate.</div>
     {error && <div className="notice error-box">{error}</div>}
-    <button className="btn btn--primary" onClick={submit} disabled={!birthDate || busy}>{busy ? 'Checking…' : 'Check eligibility'}</button>
-  </section>
-}
-
-function IneligibleStep() {
-  return <section className="step ineligible-step">
-    <div className="gate-icon"><ShieldCheck size={34}/></div>
-    <p className="eyebrow">CodaVybes AGE GATE</p>
-    <h2>CodaVybes is available from age 10.</h2>
-    <p className="muted copy">Your DOB is locked for safety. A genuine correction will require a support/admin review later; changing browser data cannot bypass the gate.</p>
-    <div className="notice">The username claimed during onboarding has been released because this account is below CodaVybes’s minimum age.</div>
-    <button className="btn btn--outline profile-signout" onClick={() => import('../services/authService').then(({ signOut }) => signOut())}>Sign out</button>
+    <button className="btn btn--primary" onClick={submit} disabled={!birthDate || !gender || busy}>{busy ? 'Saving…' : 'Continue'}</button>
   </section>
 }
 

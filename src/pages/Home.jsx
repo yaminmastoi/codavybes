@@ -15,7 +15,7 @@ import { getActivePromotions } from '../services/promotionService'
 import { getPlatformPosts } from '../services/platformService'
 import { useCommerce } from '../context/CommerceContext'
 
-function initials(name = 'CodaVybes') { return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'CV' }
+function initials(name = 'CodaVybes') { return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'CV' }
 
 function mixSponsored(items, promotions) {
   if (!promotions.length) return items.map((item)=>({kind:'post',item}))

@@ -24,7 +24,7 @@ supabase functions deploy telemetry-ingest
 
 The function verifies the signed-in user's JWT before using the server-side service-role client. Never put the service-role key in any `VITE_*` variable or browser bundle.
 
-Supabase normally provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions. If your project uses custom secret management, ensure those server-side values are available to the function.
+Supabase normally provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `PRIVATE_SB_SECRET_KEY` to Edge Functions. If your project uses custom secret management, ensure those server-side values are available to the function.
 
 ## 3) Web deployment
 

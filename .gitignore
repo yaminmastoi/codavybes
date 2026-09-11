@@ -5,3 +5,14 @@ dist/
 .env.*.local
 *.log
 .DS_Store
+
+# Generated installers / release binaries belong in GitHub Actions artifacts or Releases
+public/downloads/
+*.apk
+*.aab
+*.msi
+*.AppImage
+*.deb
+*.rpm
+platforms/mobile-capacitor/android/
+platforms/desktop-tauri/src-tauri/target/

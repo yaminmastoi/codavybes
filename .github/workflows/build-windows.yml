@@ -5,23 +5,39 @@ on:
   push:
     tags: ['v*']
 
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           package-manager-cache: false
+
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Validate production secrets
+        shell: pwsh
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if (-not $env:VITE_SUPABASE_URL) { throw 'VITE_SUPABASE_URL is missing' }
+          if (-not $env:VITE_SUPABASE_PUBLISHABLE_KEY) { throw 'VITE_SUPABASE_PUBLISHABLE_KEY is missing' }
+
       - name: Install web dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Install desktop dependencies
         working-directory: platforms/desktop-tauri
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Build CodaVybes Windows installers
         working-directory: platforms/desktop-tauri
@@ -29,13 +45,15 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_APP_PLATFORM: windows
-          VITE_APP_VERSION: 13.4.0
-        run: npm run build
+          VITE_APP_VERSION: 1.0.1
+        run: npm run build:windows
 
       - name: Upload Windows installers
         uses: actions/upload-artifact@v4
         with:
-          name: CodaVybes-Windows
+          name: CodaVybes-Windows-1.0.1-${{ github.run_number }}
+          if-no-files-found: error
+          retention-days: 30
           path: |
             platforms/desktop-tauri/src-tauri/target/release/bundle/nsis/*.exe
             platforms/desktop-tauri/src-tauri/target/release/bundle/msi/*.msi

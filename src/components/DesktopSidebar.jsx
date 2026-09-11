@@ -10,6 +10,7 @@ import {
   UserRound,
   WalletCards,
   Zap,
+  Trophy,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import Logo from './Logo'
@@ -20,13 +21,14 @@ import { useCommerce } from '../context/CommerceContext'
 const primary = [
   ['/home', Home, 'Home'],
   ['/discover', Search, 'Discover'],
+  ['/leaderboard', Trophy, 'Leaderboard'],
   ['/rooms', Gamepad2, 'Rooms'],
   ['/chats', MessageCircle, 'Chats'],
   ['/you', UserRound, 'Profile'],
 ]
 
 function initials(name = 'CodaVybes') {
-  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
+  return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
 }
 
 function SideLink({ to, icon: Icon, label, end = false }) {
@@ -63,6 +65,7 @@ export default function DesktopSidebar() {
       <SideLink to="/settings" icon={Settings} label="Settings"/>
     </nav>
 
+    <div className="desktop-sidebar__powered">Powered by <strong>CodaBite</strong></div>
     <div className="desktop-sidebar__user surface">
       <Avatar initials={initials(name)} online/>
       <div className="desktop-sidebar__user-copy">

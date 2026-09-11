@@ -4,6 +4,7 @@ export function AppLaunchLoader({ label = 'Opening CodaVybes' }) {
   return <div className="app-launch-loader" role="status" aria-live="polite">
     <div className="launch-brand-sequence" aria-hidden="true">
       <div className="launch-logo-wrap"><Logo markOnly/></div>
+      <div className="launch-name-lockup"><strong>CodaVybes</strong><small>Powered by CodaBite</small></div>
     </div>
     <span className="launch-status-copy">{label}</span>
   </div>

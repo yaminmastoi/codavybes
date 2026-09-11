@@ -1,0 +1,8 @@
+[functions.track-analytics]
+verify_jwt = false
+
+[functions.email-auth-otp]
+verify_jwt = false
+
+[functions.push-dispatch]
+verify_jwt = false

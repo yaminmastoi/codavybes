@@ -1,0 +1,2 @@
+The uploaded project's dist/ directory was a pre-patch build and is intentionally not included.
+Run `npm install` then `npm run build` (or use the included GitHub Actions workflows) to generate a fresh patched dist/.

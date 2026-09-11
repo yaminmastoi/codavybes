@@ -1,9 +1,33 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const defaultAllowedOrigins = [
+  'https://app-codavybes.vercel.app',
+  'https://codavybes.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost',
+  'capacitor://localhost',
+  'tauri://localhost',
+  'http://tauri.localhost',
+  'https://tauri.localhost',
+]
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') || ''
+  const configured = (Deno.env.get('CORS_ALLOWED_ORIGINS') || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+  const allowed = new Set([...defaultAllowedOrigins, ...configured])
+  const allowOrigin = origin && (origin === 'null' || allowed.has(origin)) ? origin : '*'
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  }
 }
 
 const safe = (value: unknown, fallback = '') => String(value || fallback).slice(0, 500)
@@ -37,8 +61,9 @@ function envMap(name: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
-  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
+  const headers = corsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers })
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405, headers)
 
   const url = env('SUPABASE_URL', 'PRIVATE_SB_URL')
   const publishableKeys = envMap('SUPABASE_PUBLISHABLE_KEYS')
@@ -46,17 +71,17 @@ Deno.serve(async (req) => {
   const anon = publishableKeys.default || env('SUPABASE_ANON_KEY', 'PRIVATE_SB_ANON_KEY')
   const serviceRole = secretKeys.default || env('PRIVATE_SB_SECRET_KEY', 'SB_SERVICE_ROLE_KEY', 'SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY')
   const authorization = req.headers.get('Authorization')
-  if (!url || !anon || !serviceRole || !authorization) return json({ error: 'Server configuration missing' }, 500)
+  if (!url || !anon || !serviceRole || !authorization) return json({ error: 'Server configuration missing' }, 500, headers)
 
   const caller = createClient(url, anon, {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },
   })
   const { data: userData, error: userError } = await caller.auth.getUser()
-  if (userError || !userData.user) return json({ ok: false, reason: 'auth_required' }, 200)
+  if (userError || !userData.user) return json({ ok: false, reason: 'auth_required' }, 200, headers)
 
   const body = await req.json().catch(() => ({}))
-  if (body?.consent?.analytics !== true) return json({ ok: false, reason: 'analytics_consent_required' }, 200)
+  if (body?.consent?.analytics !== true) return json({ ok: false, reason: 'analytics_consent_required' }, 200, headers)
 
   const ip = header(req, 'cf-connecting-ip', 'x-real-ip', 'x-forwarded-for')
   const country = header(req, 'cf-ipcountry', 'x-vercel-ip-country')
@@ -86,11 +111,11 @@ Deno.serve(async (req) => {
     p_user_agent: userAgent || null,
   })
 
-  if (error) return json({ ok: false, error: error.message }, 200)
-  return json(data || { ok: true })
+  if (error) return json({ ok: false, error: error.message }, 200, headers)
+  return json(data || { ok: true }, 200, headers)
 })
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, cors: HeadersInit = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...cors, 'Content-Type': 'application/json' },

@@ -11,7 +11,7 @@ import { PageSkeleton } from '../components/Loaders'
 import ShareMomentModal from '../components/ShareMomentModal'
 
 function initials(name = 'CodaVybes') {
-  return name.trim().split(/\s+/).slice(0, 2).map((value) => value[0]?.toUpperCase()).join('') || 'CV'
+  return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((value) => value[0]?.toUpperCase()).join('') || 'CV'
 }
 
 export default function MomentThread() {

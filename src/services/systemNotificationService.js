@@ -1,11 +1,12 @@
 const ANDROID_CHANNEL_ID = 'codavybes-alerts'
 let nativeLocalNotifications
+let tauriNotificationModule
 
 function webNotificationsSupported() {
   return typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator
 }
 
-function nativePlatform() {
+function capacitorNative() {
   if (typeof window === 'undefined') return false
   const capacitor = window.Capacitor
   if (!capacitor) return false
@@ -14,8 +15,19 @@ function nativePlatform() {
   return platform === 'android' || platform === 'ios'
 }
 
+function tauriNative() {
+  return typeof window !== 'undefined' && Boolean(window.__TAURI__ || window.__TAURI_INTERNALS__)
+}
+
+async function getTauriNotification() {
+  if (!tauriNative()) return null
+  if (tauriNotificationModule) return tauriNotificationModule
+  tauriNotificationModule = await import('@tauri-apps/plugin-notification').catch(() => null)
+  return tauriNotificationModule
+}
+
 function getNativeLocalNotifications() {
-  if (!nativePlatform()) return null
+  if (!capacitorNative()) return null
   if (nativeLocalNotifications) return nativeLocalNotifications
   const capacitor = window.Capacitor
   if (typeof capacitor.isPluginAvailable === 'function' && !capacitor.isPluginAvailable('LocalNotifications')) return null
@@ -47,15 +59,17 @@ function notificationId(value) {
 }
 
 export function systemNotificationsSupported() {
-  return Boolean(getNativeLocalNotifications()) || webNotificationsSupported()
+  return tauriNative() || Boolean(getNativeLocalNotifications()) || webNotificationsSupported()
 }
 
 export async function registerVybeServiceWorker() {
-  if (nativePlatform() || !webNotificationsSupported()) return null
+  if (capacitorNative() || tauriNative() || !webNotificationsSupported()) return null
   return navigator.serviceWorker.register('/codavybes-sw.js')
 }
 
 export async function checkSystemNotificationPermission() {
+  const tauri = await getTauriNotification()
+  if (tauri) return (await tauri.isPermissionGranted()) ? 'granted' : 'prompt'
   const plugin = getNativeLocalNotifications()
   if (plugin) {
     const result = await plugin.checkPermissions().catch(() => ({ display: 'prompt' }))
@@ -66,6 +80,11 @@ export async function checkSystemNotificationPermission() {
 }
 
 export async function requestSystemNotificationPermission() {
+  const tauri = await getTauriNotification()
+  if (tauri) {
+    if (await tauri.isPermissionGranted()) return 'granted'
+    return tauri.requestPermission()
+  }
   const plugin = getNativeLocalNotifications()
   if (plugin) {
     let result = await plugin.checkPermissions()
@@ -79,12 +98,22 @@ export async function requestSystemNotificationPermission() {
 }
 
 export function getSystemNotificationPermission() {
-  if (getNativeLocalNotifications()) return 'prompt'
+  if (tauriNative() || getNativeLocalNotifications()) return 'prompt'
   if (!webNotificationsSupported()) return 'unsupported'
   return Notification.permission
 }
 
 export async function showSystemNotification(notification) {
+  const tauri = await getTauriNotification()
+  if (tauri) {
+    if (!(await tauri.isPermissionGranted())) return false
+    tauri.sendNotification({ title: notification.title || 'CodaVybes', body: notification.body || '' })
+    // Native click routing is handled for Android push/local notifications. Tauri
+    // notification action payload support varies by desktop OS, so the tray opens
+    // the live app and the notification inbox remains the canonical destination.
+    return true
+  }
+
   const plugin = getNativeLocalNotifications()
   if (plugin) {
     const permission = await plugin.checkPermissions().catch(() => ({ display: 'denied' }))

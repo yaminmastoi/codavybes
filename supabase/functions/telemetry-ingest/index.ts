@@ -6,7 +6,7 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   const publishableKeys = JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') || '{}')
   const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}')
   const anon = publishableKeys.default || Deno.env.get('SUPABASE_ANON_KEY')
-  const serviceRole = secretKeys.default || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const serviceRole = secretKeys.default || Deno.env.get('PRIVATE_SB_SECRET_KEY')
   const authorization = req.headers.get('Authorization')
   if (!url || !anon || !serviceRole || !authorization) return json({ error: 'Server configuration missing' }, 500)
 

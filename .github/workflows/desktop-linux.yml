@@ -3,13 +3,17 @@ name: Build CodaVybes Linux Desktop
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
+
+concurrency:
+  group: linux-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   linux:
     name: Linux desktop bundles
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -18,11 +22,21 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
+          package-manager-cache: false
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Validate production secrets
+        shell: bash
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$VITE_SUPABASE_URL" || { echo "::error::VITE_SUPABASE_URL is missing"; exit 1; }
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" || { echo "::error::VITE_SUPABASE_PUBLISHABLE_KEY is missing"; exit 1; }
 
       - name: Install Linux Tauri dependencies
         run: |
@@ -42,21 +56,27 @@ jobs:
             rpm
 
       - name: Install web dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Install desktop dependencies
         working-directory: platforms/desktop-tauri
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Build Linux app
         working-directory: platforms/desktop-tauri
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_APP_PLATFORM: linux
+          VITE_APP_VERSION: 1.0.1
         run: npm run build:linux
 
       - name: Upload Linux bundles
         uses: actions/upload-artifact@v4
         with:
-          name: codavybes-linux-desktop
+          name: CodaVybes-Linux-1.0.1-${{ github.run_number }}
           if-no-files-found: error
+          retention-days: 30
           path: |
             platforms/desktop-tauri/src-tauri/target/release/bundle/appimage/*.AppImage
             platforms/desktop-tauri/src-tauri/target/release/bundle/deb/*.deb

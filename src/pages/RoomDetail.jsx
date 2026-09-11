@@ -6,6 +6,7 @@ import AuraPill from '../components/AuraPill'
 import { useAuth } from '../context/AuthContext'
 import { advanceRoomGame, getRoomState, joinRoom, leaveRoom, startRoomGame, submitGameAnswer, subscribeToRoom } from '../services/roomService'
 import { AppLaunchLoader } from '../components/Loaders'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 const games = [
   { type: 'trivia', Icon: BrainCircuit, title: 'Rapid Trivia', meta: 'Knowledge · speed · streaks' },
@@ -19,7 +20,7 @@ const games = [
 ]
 
 function initials(name = 'V') {
-  return name.trim().split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
+  return String(name ?? '').trim().split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
 }
 
 function secondsLeft(endsAt) {
@@ -35,6 +36,7 @@ export default function RoomDetail() {
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [leaveConfirm, setLeaveConfirm] = useState(false)
   const [selectedGame, setSelectedGame] = useState('trivia')
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [answerResult, setAnswerResult] = useState(null)
@@ -107,7 +109,7 @@ export default function RoomDetail() {
   }
 
   async function handleLeave() {
-    if (!window.confirm('Leave this Room?')) return
+    setLeaveConfirm(false)
     setBusy(true)
     try { await leaveRoom(roomId); navigate('/rooms',{replace:true}) }
     catch (e) { setNotice(e.message || 'Could not leave Room.') }
@@ -146,7 +148,7 @@ export default function RoomDetail() {
     <header className="room-detail-head surface">
       <button className="icon-btn" onClick={() => navigate('/rooms')}><ArrowLeft size={20}/></button>
       <div><strong>{state.room.title}</strong><span>{activeMembers.length}/{state.room.max_players} in Room</span></div>
-      <button className="icon-btn" onClick={handleLeave} disabled={busy}><LogOut size={19}/></button>
+      <button className="icon-btn" onClick={()=>setLeaveConfirm(true)} disabled={busy}><LogOut size={19}/></button>
     </header>
 
     {notice && <div className="room-notice"><Zap size={14} fill="currentColor"/>{notice}</div>}
@@ -213,6 +215,7 @@ export default function RoomDetail() {
         </section>
       </>}
     </main>}
+  <ConfirmDialog open={leaveConfirm} title="Leave this Room?" body="You can return later if the Room is still available." confirmLabel="Leave Room" busy={busy} onCancel={()=>setLeaveConfirm(false)} onConfirm={handleLeave}/>
   </div>
 }
 

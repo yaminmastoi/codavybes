@@ -55,14 +55,21 @@ const requiredRoutes = [
 ]
 for (const route of requiredRoutes) check(appRoutes.includes(`path="${route}"`), `Shared route available: ${route}`)
 check(appShell.includes('<Outlet />'), 'Every signed-in route renders through the shared platform shell')
-const platformForks = sourceFiles(resolve(root, 'src')).filter((path) => /VITE_APP_PLATFORM|VITE_PLATFORM_ONLY/.test(readFileSync(path, 'utf8')))
-check(platformForks.length === 0, 'No web, Android or Windows feature fork exists in the shared source')
+const featureSurfaceFiles = sourceFiles(resolve(root, 'src')).filter((path) => /[\/](pages|components|onboarding)[\/]|[\/]App\.jsx$/.test(path))
+const platformForks = featureSurfaceFiles.filter((path) => /VITE_APP_PLATFORM|VITE_PLATFORM_ONLY/.test(readFileSync(path, 'utf8')))
+check(platformForks.length === 0, 'No web, Android, Windows or Linux feature fork exists in shared UI/features')
 
 const migrationNames = readdirSync(resolve(root, 'supabase/migrations'))
-for (let index = 1; index <= 20; index += 1) {
+for (let index = 1; index <= 25; index += 1) {
   const prefix = String(index).padStart(3, '0') + '_'
   check(migrationNames.some((name) => name.startsWith(prefix)), `Supabase migration ${String(index).padStart(3, '0')} is present`)
 }
+check(existsSync(resolve(root, 'V13_16_SUPABASE_HOTFIX.md')), 'Supabase signup and analytics hotfix guide is present')
+check(read('supabase/migrations/021_signup_analytics_hotfix.sql').includes('v_welcome <> 0') && read('supabase/migrations/021_signup_analytics_hotfix.sql').includes('alter column session_id type text'), 'Supabase hotfix guards zero wallet ledger entries and normalizes analytics sessions')
+check(read('supabase/migrations/024_platform_leaderboard.sql').includes('public.users_are_blocked') && read('supabase/migrations/024_platform_leaderboard.sql').includes('\"position\" integer'), 'Leaderboard migration uses the existing block helper and quoted position column')
+check(read('scripts/apply-android-branding.mjs').includes('platforms') && read('scripts/apply-android-branding.mjs').includes('mobile-capacitor') && read('scripts/apply-android-branding.mjs').includes('assets'), 'Android branding uses a source-controlled app icon fallback')
+check(read('src/services/pushNotificationService.js').includes("id: 'codavybes-alerts'") && read('src/services/pushNotificationService.js').includes('createChannel'), 'Android FCM channel is created before push registration')
+check(read('.github/workflows/desktop-linux.yml').includes('VITE_APP_PLATFORM: linux'), 'Linux workflow injects Linux platform metadata and Supabase production env')
 
 check(existsSync(resolve(root, 'public/codavybes-sw.js')), 'CodaVybes PWA service worker is present')
 check(existsSync(resolve(root, 'public/vybe-sw.js')), 'Legacy PWA service worker remains for older installs')

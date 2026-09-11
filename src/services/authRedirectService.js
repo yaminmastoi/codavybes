@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { beginAuthenticatedSecondFactor } from './secondFactorService'
 
 const CAPACITOR_SCHEME = 'app.codavybes.social:'
 const TAURI_SCHEME = 'app.codavybes.desktop:'
@@ -92,8 +93,15 @@ export async function completeAuthCallback(rawUrl) {
       if (!data.session) throw new Error('The authentication callback did not contain a valid session.')
     }
 
-    await closeCapacitorBrowser()
     const destination = callbackDestination(url)
+    // Google/X are the first factor. For normal sign-in callbacks, send the
+    // CodaVybes 4-digit email challenge and remove this temporary local OAuth
+    // session. Recovery callbacks intentionally bypass this path.
+    if (destination === '/') {
+      await beginAuthenticatedSecondFactor({ purpose: 'oauth' })
+    }
+
+    await closeCapacitorBrowser()
     completedCallbacks.set(callbackKey, destination)
     return destination
   })()
@@ -120,7 +128,7 @@ async function consumeNativeCallback(url) {
 }
 
 export async function openOAuthUrl(url) {
-  if (!url) throw new Error('Google did not return an authorization URL.')
+  if (!url) throw new Error('The sign-in provider did not return an authorization URL.')
 
   if (capacitorRuntime()) {
     const browser = capacitorPlugin('Browser')
@@ -150,17 +158,13 @@ export async function initializeAuthPlatformBridge() {
     cleanups.push(() => urlHandle.remove())
 
     const stateHandle = await app.addListener('appStateChange', ({ isActive }) => {
-      if (!supabase) return
-      if (isActive) {
-        supabase.auth.startAutoRefresh()
-        supabase.auth.getSession().then(({ data }) => {
-          if (data.session?.expires_at && data.session.expires_at * 1000 < Date.now() + 60000) {
-            supabase.auth.refreshSession().catch(() => null)
-          }
-        })
-      } else {
-        supabase.auth.stopAutoRefresh()
-      }
+      if (!supabase || !isActive) return
+      supabase.auth.startAutoRefresh()
+      // Android may suspend JS timers while backgrounded. Refresh immediately on
+      // resume so a short project JWT lifetime never appears as a logout.
+      supabase.auth.getSession()
+        .then(({ data }) => data.session ? supabase.auth.refreshSession() : null)
+        .catch(() => null)
     })
     cleanups.push(() => stateHandle.remove())
 
@@ -174,6 +178,28 @@ export async function initializeAuthPlatformBridge() {
       const current = await tauri.deepLink.getCurrent().catch(() => null)
       if (current) current.forEach(consumeNativeCallback)
     }
+  }
+
+  if (typeof window !== 'undefined' && supabase) {
+    let refreshing = false
+    const recover = async () => {
+      if (refreshing || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return
+      refreshing = true
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (data.session) await supabase.auth.refreshSession()
+      } catch {}
+      finally { refreshing = false }
+    }
+    const onVisibility = () => { if (document.visibilityState === 'visible') void recover() }
+    window.addEventListener('focus', recover)
+    window.addEventListener('online', recover)
+    document.addEventListener('visibilitychange', onVisibility)
+    cleanups.push(() => {
+      window.removeEventListener('focus', recover)
+      window.removeEventListener('online', recover)
+      document.removeEventListener('visibilitychange', onVisibility)
+    })
   }
 
   return () => cleanups.forEach((cleanup) => cleanup())

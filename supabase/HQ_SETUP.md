@@ -65,8 +65,13 @@ The function validates the caller through `admin_get_session()` and only then us
 V13.14 includes `supabase/functions/track-analytics`. Deploy it after migration `020`:
 
 ```bash
-supabase functions deploy track-analytics
+supabase functions deploy track-analytics --no-verify-jwt
 ```
+
+The function performs its own Supabase user-token check. Gateway JWT verification
+is intentionally disabled for this endpoint so browser and native-app `OPTIONS`
+preflight requests reach the function and receive CORS headers. Keep the function
+protected by the in-function `Authorization` check; never remove that check.
 
 Supabase reserves the `SUPABASE_` prefix for built-in function values, so do not
 add a custom secret named `SUPABASE_SERVICE_ROLE_KEY` if the dashboard rejects it.

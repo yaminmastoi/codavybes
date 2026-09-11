@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { getPreferences } from '../services/settingsService'
 import { registerSystemNotificationActionListener, registerVybeServiceWorker, showSystemNotification } from '../services/systemNotificationService'
 import { subscribeAnnouncements, subscribeNotifications } from '../services/notificationService'
+import { registerAndroidPush } from '../services/pushNotificationService'
 
 export default function NotificationBridge() {
   const { user, refreshOnboarding } = useAuth()
@@ -11,8 +12,14 @@ export default function NotificationBridge() {
     let enabled = false
     const updateEnabled = (event) => { enabled = !!event.detail }
     window.addEventListener('vybe:system-notifications', updateEnabled)
-    registerVybeServiceWorker().catch(() => null)
     let disposed = false
+    registerVybeServiceWorker().catch(() => null)
+    let stopPush = () => {}
+    registerAndroidPush(user.id, (link) => {
+      if (typeof link === 'string' && link.startsWith('/')) window.location.assign(link)
+    }).then((stop) => { if (disposed) stop(); else stopPush = stop }).catch((error) => {
+      console.warn('[CodaVybes push] native registration unavailable:', error?.message || error)
+    })
     let stopNativeAction = () => {}
     registerSystemNotificationActionListener((link) => {
       if (typeof link === 'string' && link.startsWith('/')) window.location.assign(link)
@@ -30,7 +37,7 @@ export default function NotificationBridge() {
       if (!enabled || payload?.eventType !== 'INSERT' || !payload?.new) return
       showSystemNotification({ ...payload.new, link: payload.new.cta_url || '/notifications' }).catch(() => {})
     }, 'system-bridge')
-    return () => { disposed = true; stopUser(); stopAnnouncements(); stopNativeAction(); window.removeEventListener('vybe:system-notifications', updateEnabled) }
+    return () => { disposed = true; stopUser(); stopAnnouncements(); stopNativeAction(); stopPush(); window.removeEventListener('vybe:system-notifications', updateEnabled) }
   }, [user?.id, refreshOnboarding])
   return null
 }

@@ -1,7 +1,7 @@
 {
   "name": "codavybes-desktop-shell",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
@@ -9,6 +9,6 @@
     "build:linux": "tauri build --bundles deb,rpm,appimage"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "latest"
+    "@tauri-apps/cli": "^2.0.0"
   }
 }

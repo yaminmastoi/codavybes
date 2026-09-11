@@ -1,5 +1,9 @@
 # CodaVybes V13
 
+## V13.16 — Supabase signup + analytics hotfix
+
+V13.16 fixes production signup failures caused by a zero-value welcome wallet ledger entry and upgrades older analytics deployments whose `session_id` column is still UUID-typed. Apply `supabase/migrations/021_signup_analytics_hotfix.sql` once after migration 020; do not rerun the full migration history.
+
 ## V13.15 — fox brand + Linux desktop build
 
 V13.15 integrates the final rounded fox logo across the React brand component, app intro loader, PWA metadata, favicons, OG preview, Android asset source, Windows icons and Linux desktop bundle icons. The ear `< >` symbols were removed from the source logo. Desktop now includes separate Windows and Linux Tauri build scripts; Linux builds produce `deb`, `rpm` and `AppImage` artifacts on an Ubuntu runner.

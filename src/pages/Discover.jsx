@@ -12,7 +12,7 @@ import { PageSkeleton } from '../components/Loaders'
 import InterestIcon from '../components/InterestIcon'
 
 function initials(name = 'CodaVybes') {
-  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
+  return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'V'
 }
 
 function prettyInterest(value = '') {
@@ -131,7 +131,7 @@ export default function Discover() {
 
     {searchOpen && <div className="discover-search surface"><Search size={17}/><input autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search people, interests, @username…"/><button onClick={() => { setSearchQuery(''); setSearchOpen(false) }} aria-label="Close search"><X size={16}/></button></div>}
 
-    <div className="age-safety-chip"><ShieldCheck size={14}/><span>All eligible members can appear here. Blocked or restricted accounts stay hidden.</span></div>
+    <div className="age-safety-chip"><ShieldCheck size={14}/><span>Everyone on CodaVybes can appear here. Blocked or restricted accounts stay hidden.</span></div>
 
     <div className="filter-row discover-tabs discover-tabs--v133">
       <button className={tab === 'for_you' ? 'is-active' : ''} onClick={() => { setTab('for_you'); setSearchParams({ tab: 'for_you' }) }}>For You</button>

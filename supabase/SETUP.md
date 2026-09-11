@@ -78,9 +78,13 @@ V6 eligibility is minimum-age based. `005_social_loop_bonds_age10.sql` sets the 
 Run `020_codavybes_analytics_restore.sql`, then deploy the optional Edge Function if you want IP/location capture:
 
 ```bash
-supabase functions deploy track-analytics
+supabase functions deploy track-analytics --no-verify-jwt
 supabase secrets set PRIVATE_SB_SECRET_KEY=YOUR_SERVICE_ROLE_KEY
 ```
+
+`track-analytics` validates the caller's Supabase access token inside the
+function. The `--no-verify-jwt` flag only lets CORS preflight requests reach the
+function; it does not make event writes public.
 
 Use `PRIVATE_SB_SECRET_KEY` when adding the service-role key through Supabase
 Function Secrets. The dashboard may reject new custom names that start with

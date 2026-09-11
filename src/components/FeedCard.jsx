@@ -8,7 +8,7 @@ import RankMark from './RankMark'
 import VerifiedBadge from './VerifiedBadge'
 import ShareMomentModal from './ShareMomentModal'
 
-function initials(name = 'CodaVybes') { return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'CV' }
+function initials(name = 'CodaVybes') { return String(name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'CV' }
 
 export default function FeedCard({ item, onAura, auraBusy = false, currentUserId = null }) {
   const navigate = useNavigate();const [reacted,setReacted]=useState(false);const [reactBusy,setReactBusy]=useState(false);const [shareOpen,setShareOpen]=useState(false)

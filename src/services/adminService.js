@@ -44,7 +44,7 @@ export const adminService = {
   updateReport: (id, status, note = '') => rpc('admin_update_report', { p_report: id, p_status: status, p_note: note }),
   announcements: () => rpc('admin_list_announcements'),
   createAnnouncement: (payload) => rpc('admin_create_announcement', {
-    p_title: payload.title, p_body: payload.body, p_audience: payload.audience || 'all',
+    p_title: payload.title, p_body: payload.body, p_audience: 'all',
     p_starts: payload.starts_at || null, p_ends: payload.ends_at || null,
     p_cta_label: payload.cta_label || null, p_cta_url: payload.cta_url || null,
   }),
@@ -62,7 +62,7 @@ export const adminService = {
     p_id: item.id ?? null, p_brand: item.brand_name, p_headline: item.headline, p_body: item.body || '',
     p_image_url: item.image_url || null, p_destination_url: item.destination_url || null,
     p_cta_label: item.cta_label || 'Learn more', p_active: item.active !== false,
-    p_priority: Number(item.priority || 0), p_min_age: Math.max(18, Number(item.min_age || 18)), p_starts: item.starts_at || null, p_ends: item.ends_at || null, p_reason: reason,
+    p_priority: Number(item.priority || 0), p_min_age: 10, p_starts: item.starts_at || null, p_ends: item.ends_at || null, p_reason: reason,
   }),
   platformPosts: () => rpc('admin_list_platform_posts'),
   createPlatformPost: (post) => rpc('admin_create_platform_post', {

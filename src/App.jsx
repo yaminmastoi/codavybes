@@ -25,6 +25,7 @@ import LegalPage from './pages/LegalPage'
 import ConsentBanner from './components/ConsentBanner'
 import AuthCallback from './pages/AuthCallback'
 import AnalyticsBridge from './components/AnalyticsBridge'
+import Leaderboard from './pages/Leaderboard'
 
 export default function App() {
   return (<>
@@ -44,6 +45,7 @@ export default function App() {
       <Route element={<RequireOnboarded><AppShell /></RequireOnboarded>}>
         <Route path="/home" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/rooms" element={<Rooms />} />
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
         <Route path="/chats" element={<Chats />} />
